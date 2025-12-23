@@ -1,0 +1,65 @@
+# CSPM Aggregator Configuration
+# Last Updated: 2024-12-22
+
+# Cloud provider settings
+providers:
+  aws:
+    enabled: true
+    # Use OIDC federation - no credentials stored
+    use_oidc: true
+    role_arn: "" # Set via environment: AWS_ROLE_ARN
+    regions:
+      - us-east-1
+      - us-west-2
+
+  azure:
+    enabled: true
+    # Use Managed Identity - no credentials stored
+    use_managed_identity: true
+    tenant_id: "" # Set via environment: AZURE_TENANT_ID
+    subscriptions: [] # Query all accessible subscriptions
+
+  gcp:
+    enabled: true
+    # Use Workload Identity Federation - no credentials stored
+    use_wif: true
+    organization_id: "" # Set via environment: GCP_ORG_ID
+    wif_config_path: "" # Set via environment: GCP_WIF_CONFIG_PATH
+
+# Findings filter
+filters:
+  severities:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+  exclude_preview: true # Only GA controls
+  max_age_days: 90
+
+# Asana integration
+asana:
+  enabled: true
+  project_gid: "" # Set via environment: ASANA_PROJECT_GID
+  # PAT stored in Key Vault, retrieved via: ASANA_PAT
+
+# Email notifications
+email:
+  enabled: true
+  sender: "" # Set via environment: MAIL_SENDER_ADDRESS
+  recipients:
+    infosec: []
+    aws_ops: []
+    azure_ops: []
+    gcp_ops: []
+
+# Reporting
+reports:
+  output_dir: "./reports"
+  formats:
+    - html
+    - csv
+  include_charts: true
+
+# Schedule (for reference - actual scheduling via Azure Automation)
+schedule:
+  monthly_report: "0 8 1 * *" # 1st of month at 8:00 AM
+  timezone: "America/Los_Angeles"

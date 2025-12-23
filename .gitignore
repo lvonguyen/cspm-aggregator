@@ -1,0 +1,58 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+
+# Go workspace
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Credentials (never commit)
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+wif-config.json
+
+# Reports output
+reports/
+*.csv
+*.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temp
+tmp/
+temp/
+
+# AI/Claude instructions (keep local)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+*.local.md
+.local/
