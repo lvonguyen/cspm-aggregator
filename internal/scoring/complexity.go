@@ -36,16 +36,16 @@ func (t ComplexityTier) String() string {
 
 // ComplexityFinding represents a finding for complexity assessment.
 type ComplexityFinding struct {
-	ID                 string `json:"id"`
-	Source             string `json:"source"`
-	Severity           string `json:"severity"`
-	FindingType        string `json:"finding_type"`
-	ResourceID         string `json:"resource_id"`
-	ResourceType       string `json:"resource_type"`
-	Region             string `json:"region"`
-	AccountID          string `json:"account_id"`
-	Title              string `json:"title"`
-	Description        string `json:"description"`
+	ID           string `json:"id"`
+	Source       string `json:"source"`
+	Severity     string `json:"severity"`
+	FindingType  string `json:"finding_type"`
+	ResourceID   string `json:"resource_id"`
+	ResourceType string `json:"resource_type"`
+	Region       string `json:"region"`
+	AccountID    string `json:"account_id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
 
 	// Environment context
 	EnvType            string `json:"env_type"`
@@ -56,63 +56,64 @@ type ComplexityFinding struct {
 // ComplexityAssessment is the output of remediation complexity analysis.
 type ComplexityAssessment struct {
 	// Tier classification
-	Tier        ComplexityTier `json:"tier"`
-	TierName    string         `json:"tier_name"`
+	Tier     ComplexityTier `json:"tier"`
+	TierName string         `json:"tier_name"`
 
 	// Complexity score (1-100, higher = more complex)
 	ComplexityScore int `json:"complexity_score"`
 
 	// Automation candidacy
-	AutomationCandidate  bool     `json:"automation_candidate"`
-	AutomationBlockers   []string `json:"automation_blockers,omitempty"`
+	AutomationCandidate bool     `json:"automation_candidate"`
+	AutomationBlockers  []string `json:"automation_blockers,omitempty"`
 
 	// Coordination requirements
-	RequiresAppTeam        bool `json:"requires_app_team"`
-	RequiresNetworkTeam    bool `json:"requires_network_team"`
-	RequiresDBTeam         bool `json:"requires_db_team"`
-	RequiresChangeWindow   bool `json:"requires_change_window"`
-	RequiresDowntime       bool `json:"requires_downtime"`
+	RequiresAppTeam      bool `json:"requires_app_team"`
+	RequiresNetworkTeam  bool `json:"requires_network_team"`
+	RequiresDBTeam       bool `json:"requires_db_team"`
+	RequiresChangeWindow bool `json:"requires_change_window"`
+	RequiresDowntime     bool `json:"requires_downtime"`
 
 	// Service impact
-	ServiceImpact          string `json:"service_impact"`       // none, minimal, moderate, significant
-	EstimatedDowntimeMin   int    `json:"estimated_downtime_min,omitempty"`
+	ServiceImpact        string `json:"service_impact"` // none, minimal, moderate, significant
+	EstimatedDowntimeMin int    `json:"estimated_downtime_min,omitempty"`
 
 	// Effort estimation
-	EstimatedEffortHours   float64 `json:"estimated_effort_hours"`
-	RecommendedApproach    string  `json:"recommended_approach"`
+	EstimatedEffortHours float64 `json:"estimated_effort_hours"`
+	RecommendedApproach  string  `json:"recommended_approach"`
 
 	// Explanation
-	Rationale              string   `json:"rationale"`
-	ComplexityFactors      []string `json:"complexity_factors,omitempty"`
+	Rationale         string   `json:"rationale"`
+	ComplexityFactors []string `json:"complexity_factors,omitempty"`
 
 	// Metadata
-	AssessedAt             time.Time `json:"assessed_at"`
-	RuleMatched            string    `json:"rule_matched,omitempty"`
-	AIAssessed             bool      `json:"ai_assessed"`
+	AssessedAt  time.Time `json:"assessed_at"`
+	RuleMatched string    `json:"rule_matched,omitempty"`
+	AIAssessed  bool      `json:"ai_assessed"`
 }
 
 // ComplexityRule defines a rule for assessing remediation complexity.
 type ComplexityRule struct {
-	ID             string         `json:"id"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
-	
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+
 	// Matching criteria
-	FindingTypes   []string       `json:"finding_types"`   // Glob patterns
-	ResourceTypes  []string       `json:"resource_types"`  // Glob patterns
-	CloudProvider  string         `json:"cloud_provider"`  // aws, azure, gcp, or empty for all
+	FindingTypes  []string `json:"finding_types"`  // Glob patterns
+	ResourceTypes []string `json:"resource_types"` // Glob patterns
+	CloudProvider string   `json:"cloud_provider"` // aws, azure, gcp, or empty for all
 
 	// Assessment output
-	Tier                   ComplexityTier `json:"tier"`
-	AutomationCandidate    bool           `json:"automation_candidate"`
-	RequiresAppTeam        bool           `json:"requires_app_team"`
-	RequiresNetworkTeam    bool           `json:"requires_network_team"`
-	RequiresDBTeam         bool           `json:"requires_db_team"`
-	RequiresChangeWindow   bool           `json:"requires_change_window"`
-	RequiresDowntime       bool           `json:"requires_downtime"`
-	ServiceImpact          string         `json:"service_impact"`
-	EstimatedEffortHours   float64        `json:"estimated_effort_hours"`
-	RecommendedApproach    string         `json:"recommended_approach"`
+	Tier                 ComplexityTier `json:"tier"`
+	AutomationCandidate  bool           `json:"automation_candidate"`
+	AutomationBlockers   []string       `json:"automation_blockers,omitempty"`
+	RequiresAppTeam      bool           `json:"requires_app_team"`
+	RequiresNetworkTeam  bool           `json:"requires_network_team"`
+	RequiresDBTeam       bool           `json:"requires_db_team"`
+	RequiresChangeWindow bool           `json:"requires_change_window"`
+	RequiresDowntime     bool           `json:"requires_downtime"`
+	ServiceImpact        string         `json:"service_impact"`
+	EstimatedEffortHours float64        `json:"estimated_effort_hours"`
+	RecommendedApproach  string         `json:"recommended_approach"`
 }
 
 // ComplexityNormalizer assesses remediation complexity for findings.
@@ -126,15 +127,15 @@ type ComplexityNormalizer struct {
 // ComplexityConfig holds configuration for complexity assessment.
 type ComplexityConfig struct {
 	// Bump rules
-	ProdEnvironmentBump     bool // Bump tier +1 for prod
-	StatefulResourceBump    bool // Bump tier +1 for stateful resources
-	HighDependencyBump      bool // Bump tier +1 for >5 dependencies
-	SharedResourceMinTier   ComplexityTier // Minimum tier for shared resources
+	ProdEnvironmentBump   bool           // Bump tier +1 for prod
+	StatefulResourceBump  bool           // Bump tier +1 for stateful resources
+	HighDependencyBump    bool           // Bump tier +1 for >5 dependencies
+	SharedResourceMinTier ComplexityTier // Minimum tier for shared resources
 
 	// AI fallback
-	UseAIForUnknown         bool
-	AIModelName             string
-	AITemperature           float64
+	UseAIForUnknown bool
+	AIModelName     string
+	AITemperature   float64
 }
 
 // DefaultComplexityConfig returns sensible defaults.
@@ -902,4 +903,3 @@ func defaultComplexityRules() []ComplexityRule {
 		},
 	}
 }
-
