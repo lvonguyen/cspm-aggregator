@@ -242,7 +242,7 @@ func (cn *ComplexityNormalizer) matchRule(finding *ComplexityFinding) *Complexit
 }
 
 // applyRule creates an assessment from a matched rule.
-func (cn *ComplexityNormalizer) applyRule(rule *ComplexityRule, finding *ComplexityFinding) *ComplexityAssessment {
+func (cn *ComplexityNormalizer) applyRule(rule *ComplexityRule, _ *ComplexityFinding) *ComplexityAssessment {
 	return &ComplexityAssessment{
 		Tier:                 rule.Tier,
 		AutomationCandidate:  rule.AutomationCandidate,
@@ -370,7 +370,7 @@ Tier guidelines:
 }
 
 // conservativeAssessment returns a conservative default assessment.
-func (cn *ComplexityNormalizer) conservativeAssessment(finding *ComplexityFinding) *ComplexityAssessment {
+func (cn *ComplexityNormalizer) conservativeAssessment(_ *ComplexityFinding) *ComplexityAssessment {
 	return &ComplexityAssessment{
 		Tier:                 Tier2,
 		AutomationCandidate:  false,
