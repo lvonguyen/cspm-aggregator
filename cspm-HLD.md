@@ -4,7 +4,7 @@
 | --- | --- |
 | Version | 4.0 |
 | Author | Liem Vo-Nguyen |
-| Date | January 2026 |
+| Date | January 2025 |
 | Status | Draft |
 
 ---
@@ -644,4 +644,4 @@ cspm-aggregator/
 
 **Author:** Liem Vo-Nguyen  
 **Email:** liem@vonguyen.io  
-**LinkedIn:** linkedin.com/in/liemvonguyen
+**LinkedIn:** linkedin.com/in/liemvn

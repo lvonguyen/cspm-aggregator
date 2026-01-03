@@ -13,11 +13,11 @@
 
 CSPM Aggregator transforms raw security findings from AWS Security Hub, Azure Defender for Cloud, and GCP Security Command Center into **prioritized, actionable work items** through:
 
-- **AI-Powered Risk Scoring** - Contextual severity adjustment using business context, compensating controls, and historical patterns
-- **Remediation Complexity Analysis** - Automatic classification by automation candidacy and coordination requirements  
-- **Priority Matrix** - Combined risk + complexity scoring into P1-P5 prioritization with SLA tracking
-- **Quick Win Identification** - Auto-detection of high-impact findings that can be remediated immediately
-- **Workflow Automation** - Asana task sync, email distribution, and auto-remediation triggers
+- 🤖 **AI-Powered Risk Scoring** - Contextual severity adjustment using business context, compensating controls, and historical patterns
+- 🎯 **Remediation Complexity Analysis** - Automatic classification by automation candidacy and coordination requirements  
+- 📊 **Priority Matrix** - Combined risk + complexity scoring into P1-P5 prioritization with SLA tracking
+- ⚡ **Quick Win Identification** - Auto-detection of high-impact findings that can be remediated immediately
+- 🔄 **Workflow Automation** - Asana task sync, email distribution, and auto-remediation triggers
 
 ## Architecture
 
@@ -176,20 +176,20 @@ AI Assessment:
 
 | Tier | Examples | Automation |
 |------|----------|------------|
-| **Tier 1** | S3 public access, logging, tags, IMDSv2 | Full automation |
-| **Tier 2** | Security groups, IAM policies, TLS config | Partial (needs review) |
-| **Tier 3** | Database config, network redesign, critical patches | Manual + coordination |
+| **Tier 1** | S3 public access, logging, tags, IMDSv2 | ✅ Full automation |
+| **Tier 2** | Security groups, IAM policies, TLS config | ⚠️ Partial (needs review) |
+| **Tier 3** | Database config, network redesign, critical patches | ❌ Manual + coordination |
 
 ### Priority Matrix
 
 |                 | Tier 1 | Tier 2 | Tier 3 |
 |-----------------|--------|--------|--------|
-| **CRITICAL**    | P1     | P1     | P2     |
-| **HIGH**        | P1     | P2     | P3     |
+| **CRITICAL**    | P1 ⚡   | P1     | P2     |
+| **HIGH**        | P1 ⚡   | P2     | P3     |
 | **MEDIUM**      | P3     | P4     | P4     |
 | **LOW**         | P4     | P5     | P5     |
 
-= Auto-remediation candidate
+⚡ = Auto-remediation candidate
 
 ## API Endpoints
 
@@ -226,7 +226,7 @@ GET /api/v1/reports/quick-wins
 - Implemented 30+ context signals including asset tier, compensating controls, network exposure, and historical false positive patterns
 - Built business rule guardrails (never downgrade CRITICAL on Tier1-Prod + internet-facing)
 - Created 3-tier remediation complexity classification with 25+ pre-built rules
-- Designed priority matrix combining risk x complexity into P1-P5 queues
+- Designed priority matrix combining risk × complexity into P1-P5 queues
 
 **Result:**
 - **40% reduction** in actionable findings through contextual noise filtering
@@ -270,7 +270,7 @@ GET /api/v1/reports/quick-wins
 
 **Author:** Liem Vo-Nguyen  
 **Email:** liem@vonguyen.io  
-**LinkedIn:** [linkedin.com/in/liemvonguyen](https://linkedin.com/in/liemvonguyen)
+**LinkedIn:** [linkedin.com/in/liemvn](https://linkedin.com/in/liemvn)
 
 ## License
 
