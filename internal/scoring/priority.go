@@ -193,7 +193,7 @@ func (pm *PriorityMatrix) PrioritizeFindings(ctx context.Context, findings []*Fi
 }
 
 // calculatePriority determines priority from risk severity and complexity tier.
-func (pm *PriorityMatrix) calculatePriority(severity string, tier ComplexityTier, finding *Finding) (Priority, string) {
+func (pm *PriorityMatrix) calculatePriority(severity string, tier ComplexityTier, _ *Finding) (Priority, string) {
 	/*
 	Priority Matrix:
 	
