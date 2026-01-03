@@ -146,7 +146,7 @@ func DefaultComplexityConfig() ComplexityConfig {
 		HighDependencyBump:    true,
 		SharedResourceMinTier: Tier2,
 		UseAIForUnknown:       true,
-		AIModelName:           "claude-sonnet-4-20250514",
+		AIModelName:           "claude-opus-4-5-20250514",
 		AITemperature:         0.1,
 	}
 }

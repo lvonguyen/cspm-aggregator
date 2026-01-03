@@ -426,7 +426,7 @@ GCP_WIF_CONFIG_PATH=/path/to/wif-config.json
 # AI Scoring
 LLM_PROVIDER=anthropic                    # anthropic, openai, bedrock
 ANTHROPIC_API_KEY=sk-xxx                  # If using Anthropic
-LLM_MODEL=claude-sonnet-4-20250514
+LLM_MODEL=claude-opus-4-5-20250514
 LLM_TEMPERATURE=0.1
 LLM_MAX_TOKENS=1024
 
@@ -458,7 +458,7 @@ STATE_CONTAINER=cspm-state
 # AI Scoring Configuration
 scoring:
   risk:
-    model: claude-sonnet-4-20250514
+    model: claude-opus-4-5-20250514
     temperature: 0.1
     guardrails:
       never_downgrade_critical_prod_internet: true
@@ -624,7 +624,7 @@ cspm-aggregator/
 | Layer | Technology |
 | --- | --- |
 | Language | Go 1.21+ |
-| LLM Provider | Anthropic Claude (claude-sonnet-4-20250514) |
+| LLM Provider | Anthropic Claude (claude-opus-4-5-20250514) |
 | AWS SDK | github.com/aws/aws-sdk-go-v2 |
 | Azure SDK | github.com/Azure/azure-sdk-for-go |
 | GCP SDK | cloud.google.com/go |

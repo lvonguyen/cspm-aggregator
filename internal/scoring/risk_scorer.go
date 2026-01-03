@@ -134,7 +134,7 @@ type RiskScorerConfig struct {
 // DefaultRiskScorerConfig returns sensible defaults.
 func DefaultRiskScorerConfig() RiskScorerConfig {
 	return RiskScorerConfig{
-		ModelName:                                "claude-sonnet-4-20250514",
+		ModelName:                                "claude-opus-4-5-20250514",
 		Temperature:                              0.1,
 		MaxTokens:                                1024,
 		NeverDowngradeCriticalProdInternetFacing: true,

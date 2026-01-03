@@ -95,7 +95,7 @@ export GCP_WIF_CONFIG_PATH=/path/to/wif-config.json
 
 # AI scoring
 export ANTHROPIC_API_KEY=sk-xxx
-export LLM_MODEL=claude-sonnet-4-20250514
+export LLM_MODEL=claude-opus-4-5-20250514
 
 # Integrations
 export ASANA_PAT=xxx
