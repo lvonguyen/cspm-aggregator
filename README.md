@@ -213,48 +213,6 @@ GET /api/v1/reports/quick-wins
 
 ---
 
-## STAR Stories (Interview Reference)
-
-### Story 1: AI-Enhanced Security Operations
-
-**Situation:** Managing 270+ cloud environments across AWS, Azure, and GCP generating thousands of security findings monthly. Raw CSPM tool severity often misaligned with actual business risk - critical findings on unused sandbox resources alongside ignored real threats.
-
-**Task:** Design and implement an intelligent finding prioritization system that reduces noise while ensuring genuine risks are addressed promptly.
-
-**Action:**
-- Architected AI-powered contextual risk scoring using Claude LLM
-- Implemented 30+ context signals including asset tier, compensating controls, network exposure, and historical false positive patterns
-- Built business rule guardrails (never downgrade CRITICAL on Tier1-Prod + internet-facing)
-- Created 3-tier remediation complexity classification with 25+ pre-built rules
-- Designed priority matrix combining risk x complexity into P1-P5 queues
-
-**Result:**
-- **40% reduction** in actionable findings through contextual noise filtering
-- **15-25% auto-accept rate** for low-risk findings with high FP history
-- **Quick wins identification** - 34% of total risk addressable through automated Tier1 remediation
-- Reduced mean time to remediate from 14 days to 3 days for P1-P2 findings
-
-### Story 2: Cross-Cloud Security Posture Unification
-
-**Situation:** Security findings scattered across AWS Security Hub, Azure Defender, and GCP SCC with inconsistent severity scales, no unified prioritization, and manual CSV export/email distribution consuming 2+ days monthly.
-
-**Task:** Build a unified cross-cloud CSPM platform that normalizes findings, provides consistent prioritization, and automates reporting workflows.
-
-**Action:**
-- Designed Go-based aggregator with zero-credential authentication (OIDC, WIF, Managed Identity)
-- Implemented common finding schema with CBU/Tier/Environment enrichment
-- Built delta detection for New/Existing/Closed/Reopened finding tracking
-- Created automated Asana task sync with lifecycle management
-- Developed HTML/CSV reporting with Microsoft Graph email distribution
-
-**Result:**
-- **96% closure rate** on 1,600+ security findings
-- **2 days/month** eliminated in manual reporting effort
-- **Single source of truth** across 4 AWS orgs, 93 GCP projects, 45 Azure subscriptions
-- SLA compliance improved from 72% to 94%
-
----
-
 ## Roadmap
 
 - [x] Multi-cloud finding aggregation
