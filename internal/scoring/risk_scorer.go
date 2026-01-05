@@ -186,13 +186,14 @@ func (rs *RiskScorer) ScoreFinding(ctx context.Context, finding *Finding) (*Risk
 	// Step 4: Build prompt
 	prompt := rs.promptBuilder.BuildPrompt(finding)
 
-	// Step 5: Call LLM
-	response, err := rs.llmProvider.Complete(ctx, CompletionRequest{
+	// Step 5: Call LLM (clone request to prevent shared mutable state)
+	req := CompletionRequest{
 		Model:       rs.config.ModelName,
 		Messages:    []Message{{Role: "user", Content: prompt}},
 		Temperature: rs.config.Temperature,
 		MaxTokens:   rs.config.MaxTokens,
-	})
+	}
+	response, err := rs.llmProvider.Complete(ctx, req.Clone())
 	if err != nil {
 		return nil, fmt.Errorf("LLM completion failed: %w", err)
 	}
@@ -565,6 +566,22 @@ type CompletionRequest struct {
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+}
+
+// Clone creates a deep copy of CompletionRequest with a new Messages slice.
+// This prevents shared mutable state when passing requests to LLM providers.
+func (r CompletionRequest) Clone() CompletionRequest {
+	clone := CompletionRequest{
+		Model:       r.Model,
+		Temperature: r.Temperature,
+		MaxTokens:   r.MaxTokens,
+		System:      r.System,
+	}
+	if r.Messages != nil {
+		clone.Messages = make([]Message, len(r.Messages))
+		copy(clone.Messages, r.Messages)
+	}
+	return clone
 }
 
 // CompletionResponse represents an LLM response.

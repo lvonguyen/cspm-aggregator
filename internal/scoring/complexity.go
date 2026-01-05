@@ -312,12 +312,14 @@ Tier guidelines:
 		finding.DataClassification,
 	)
 
-	response, err := cn.llmProvider.Complete(ctx, CompletionRequest{
+	// Clone request to prevent shared mutable state
+	req := CompletionRequest{
 		Model:       cn.config.AIModelName,
 		Messages:    []Message{{Role: "user", Content: prompt}},
 		Temperature: cn.config.AITemperature,
 		MaxTokens:   1024,
-	})
+	}
+	response, err := cn.llmProvider.Complete(ctx, req.Clone())
 	if err != nil {
 		return nil, err
 	}
