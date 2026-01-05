@@ -18,6 +18,8 @@ require (
 	google.golang.org/api v0.152.0
 )
 
+require gopkg.in/yaml.v3 v3.0.1
+
 require (
 	cloud.google.com/go v0.110.10 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect

@@ -1,5 +1,5 @@
 # CSPM Aggregator Configuration
-# Last Updated: 2024-12-22
+# Last Updated: 2025-01-04
 
 # Cloud provider settings
 providers:
@@ -35,6 +35,13 @@ filters:
   exclude_preview: true # Only GA controls
   max_age_days: 90
 
+# AI/LLM Scoring Configuration
+ai:
+  model_name: "claude-opus-4-5-20250514"
+  temperature: 0.1
+  max_tokens: 1024
+  api_key_env: "ANTHROPIC_API_KEY" # Environment variable containing API key
+
 # Asana integration
 asana:
   enabled: true
@@ -63,3 +70,10 @@ reports:
 schedule:
   monthly_report: "0 8 1 * *" # 1st of month at 8:00 AM
   timezone: "America/Los_Angeles"
+
+# AI Scoring Configuration
+ai:
+  model_name: "claude-opus-4-5-20250514"
+  temperature: 0.1
+  max_tokens: 1024
+  api_key_env: "ANTHROPIC_API_KEY" # Environment variable containing API key

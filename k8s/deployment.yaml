@@ -1,0 +1,292 @@
+# CSPM Aggregator - Kubernetes Deployment
+# Designed for Azure AKS with Workload Identity
+#
+# Prerequisites:
+# - AKS cluster with OIDC issuer and Workload Identity enabled
+# - Azure Key Vault with ANTHROPIC_API_KEY secret
+# - Managed Identity with federation to this service account
+# - AWS IAM OIDC trust for cross-cloud access (if querying AWS)
+# - GCP Workload Identity Federation (if querying GCP)
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cspm-aggregator
+  labels:
+    app.kubernetes.io/name: cspm-aggregator
+    app.kubernetes.io/component: security
+---
+# Service Account with Workload Identity annotation
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cspm-aggregator
+  namespace: cspm-aggregator
+  annotations:
+    # Azure Workload Identity
+    azure.workload.identity/client-id: "${AZURE_CLIENT_ID}"
+    # For cross-cloud OIDC federation
+    # The managed identity has federated credentials for AWS and GCP
+  labels:
+    azure.workload.identity/use: "true"
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cspm-aggregator-config
+  namespace: cspm-aggregator
+data:
+  config.yaml: |
+    providers:
+      aws:
+        enabled: true
+        use_oidc: true
+        regions:
+          - us-east-1
+          - us-west-2
+      azure:
+        enabled: true
+        use_managed_identity: true
+      gcp:
+        enabled: true
+        use_wif: true
+    
+    filters:
+      severities:
+        - CRITICAL
+        - HIGH
+        - MEDIUM
+      exclude_preview: true
+      max_age_days: 90
+    
+    asana:
+      enabled: true
+    
+    email:
+      enabled: true
+    
+    reports:
+      output_dir: "/app/reports"
+      formats:
+        - html
+        - csv
+      include_charts: true
+    
+    ai:
+      model_name: "claude-opus-4-5-20250514"
+      temperature: 0.1
+      max_tokens: 1024
+---
+# CronJob for scheduled execution (monthly)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cspm-aggregator
+  namespace: cspm-aggregator
+  labels:
+    app.kubernetes.io/name: cspm-aggregator
+    app.kubernetes.io/component: cronjob
+spec:
+  # Run on 1st of each month at 8:00 AM PST (16:00 UTC)
+  schedule: "0 16 1 * *"
+  timeZone: "America/Los_Angeles"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600  # 1 hour timeout
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: cspm-aggregator
+            azure.workload.identity/use: "true"
+        spec:
+          serviceAccountName: cspm-aggregator
+          restartPolicy: OnFailure
+          
+          # Security context
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          
+          containers:
+            - name: aggregator
+              image: ghcr.io/lvonguyen/cspm-aggregator:latest
+              imagePullPolicy: Always
+              
+              args:
+                - "--config"
+                - "/app/configs/config.yaml"
+              
+              # Container security
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              
+              # Resource limits
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "256Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "1Gi"
+              
+              # Environment variables
+              env:
+                # Cloud provider credentials (via Workload Identity)
+                - name: AWS_ROLE_ARN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: aws-role-arn
+                - name: AZURE_TENANT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: azure-tenant-id
+                - name: GCP_ORG_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: gcp-org-id
+                
+                # Asana integration
+                - name: ASANA_PROJECT_GID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: asana-project-gid
+                - name: ASANA_PAT
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: asana-pat
+                
+                # AI API key (from Key Vault via CSI driver)
+                - name: ANTHROPIC_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: anthropic-api-key
+                
+                # Email
+                - name: MAIL_SENDER_ADDRESS
+                  valueFrom:
+                    secretKeyRef:
+                      name: cspm-aggregator-secrets
+                      key: mail-sender-address
+                
+                # Application settings
+                - name: APP_ENV
+                  value: "production"
+              
+              # Volume mounts
+              volumeMounts:
+                - name: config
+                  mountPath: /app/configs
+                  readOnly: true
+                - name: reports
+                  mountPath: /app/reports
+                - name: tmp
+                  mountPath: /tmp
+          
+          volumes:
+            - name: config
+              configMap:
+                name: cspm-aggregator-config
+            - name: reports
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+          
+          # Node affinity for cost optimization
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  preference:
+                    matchExpressions:
+                      - key: kubernetes.azure.com/scalesetpriority
+                        operator: In
+                        values:
+                          - spot
+---
+# NetworkPolicy - Restrict egress to required endpoints only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cspm-aggregator-netpol
+  namespace: cspm-aggregator
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cspm-aggregator
+  policyTypes:
+    - Egress
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # HTTPS for cloud APIs
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# PodDisruptionBudget (for Job - allows voluntary disruption)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cspm-aggregator-pdb
+  namespace: cspm-aggregator
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cspm-aggregator
+---
+# External Secret (if using External Secrets Operator with Azure Key Vault)
+# Uncomment if using ESO instead of direct SecretProviderClass
+# apiVersion: external-secrets.io/v1beta1
+# kind: ExternalSecret
+# metadata:
+#   name: cspm-aggregator-secrets
+#   namespace: cspm-aggregator
+# spec:
+#   refreshInterval: 1h
+#   secretStoreRef:
+#     name: azure-keyvault
+#     kind: ClusterSecretStore
+#   target:
+#     name: cspm-aggregator-secrets
+#     creationPolicy: Owner
+#   data:
+#     - secretKey: anthropic-api-key
+#       remoteRef:
+#         key: cspm-anthropic-api-key
+#     - secretKey: asana-pat
+#       remoteRef:
+#         key: cspm-asana-pat

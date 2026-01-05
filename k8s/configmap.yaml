@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cspm-aggregator-config
+  namespace: cspm-system
+data:
+  config.yaml: |
+    # CSPM Aggregator Configuration - Kubernetes Environment
+    
+    providers:
+      aws:
+        enabled: true
+        use_oidc: true
+        role_arn: "" # Provided by IRSA
+        regions:
+          - us-east-1
+          - us-west-2
+          - eu-west-1
+
+      azure:
+        enabled: true
+        use_managed_identity: true
+        tenant_id: "" # Provided by Workload Identity
+        subscriptions: []
+
+      gcp:
+        enabled: true
+        use_wif: true
+        organization_id: "" # Set via GCP_ORG_ID env var
+        wif_config_path: ""
+
+    filters:
+      severities:
+        - CRITICAL
+        - HIGH
+        - MEDIUM
+      exclude_preview: true
+      max_age_days: 90
+
+    ai:
+      model_name: "claude-opus-4-5-20250514"
+      temperature: 0.1
+      max_tokens: 1024
+      api_key_env: "ANTHROPIC_API_KEY"
+
+    asana:
+      enabled: true
+      project_gid: "" # Set via ASANA_PROJECT_GID env var
+
+    email:
+      enabled: true
+      sender: "" # Set via MAIL_SENDER_ADDRESS env var
+      recipients:
+        infosec: []
+        aws_ops: []
+        azure_ops: []
+        gcp_ops: []
+
+    reports:
+      output_dir: "/app/reports"
+      formats:
+        - html
+        - csv
+      include_charts: true
+
+    schedule:
+      monthly_report: "0 8 1 * *"
+      timezone: "America/Los_Angeles"

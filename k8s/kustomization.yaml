@@ -1,0 +1,33 @@
+# CSPM Aggregator Kubernetes Manifests
+#
+# Deploy with: kubectl apply -k k8s/
+#
+# Prerequisites:
+# 1. Workload Identity configured (AWS IRSA / Azure WIF / GCP WIF)
+# 2. External Secrets Operator for secret management
+# 3. Namespace: cspm-system
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cspm-system
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - configmap.yaml
+  - externalsecret.yaml
+  - cronjob.yaml
+  - networkpolicy.yaml
+  - pdb.yaml
+
+images:
+  - name: cspm-aggregator
+    newName: ghcr.io/lvonguyen/cspm-aggregator
+    newTag: latest
+
+commonLabels:
+  app.kubernetes.io/name: cspm-aggregator
+  app.kubernetes.io/component: security
+  app.kubernetes.io/part-of: security-operations
+  app.kubernetes.io/managed-by: kustomize

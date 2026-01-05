@@ -1,0 +1,41 @@
+# NetworkPolicy - Restrict network access for CSPM Aggregator
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cspm-aggregator
+  namespace: cspm-system
+spec:
+  podSelector:
+    matchLabels:
+      app: cspm-aggregator
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  # No ingress needed - this is a batch job
+  ingress: []
+  
+  # Egress: Allow only required external endpoints
+  egress:
+    # DNS resolution
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # AWS APIs (Security Hub, STS, etc.)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # Note: In production, consider using more restrictive egress rules
+    # with specific AWS/Azure/GCP IP ranges or using a service mesh

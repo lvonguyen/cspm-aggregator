@@ -51,7 +51,6 @@ tmp/
 temp/
 
 # AI/Claude instructions (keep local)
-.claude/
 CLAUDE.md
 CLAUDE.local.md
 *.local.md

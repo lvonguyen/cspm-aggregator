@@ -1,0 +1,124 @@
+# CronJob for scheduled CSPM aggregation runs
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cspm-aggregator
+  namespace: cspm-system
+spec:
+  # Run on the 1st of each month at 8:00 AM PT
+  schedule: "0 16 1 * *"  # 16:00 UTC = 8:00 AM PT
+  timeZone: "America/Los_Angeles"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600  # 1 hour timeout
+      template:
+        metadata:
+          labels:
+            app: cspm-aggregator
+            azure.workload.identity/use: "true"
+        spec:
+          serviceAccountName: cspm-aggregator
+          restartPolicy: Never
+          
+          # Security context - run as non-root
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          
+          containers:
+            - name: aggregator
+              image: cspm-aggregator:latest
+              imagePullPolicy: Always
+              
+              args:
+                - "--config"
+                - "/app/configs/config.yaml"
+                - "--cloud"
+                - "all"
+              
+              # Container security context
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              
+              # Resource limits
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              
+              # Environment variables
+              env:
+                - name: TZ
+                  value: "America/Los_Angeles"
+                # GCP Organization ID
+                - name: GCP_ORG_ID
+                  valueFrom:
+                    configMapKeyRef:
+                      name: cspm-aggregator-env
+                      key: GCP_ORG_ID
+                      optional: true
+                # Asana Project GID
+                - name: ASANA_PROJECT_GID
+                  valueFrom:
+                    configMapKeyRef:
+                      name: cspm-aggregator-env
+                      key: ASANA_PROJECT_GID
+                      optional: true
+                # Mail sender
+                - name: MAIL_SENDER_ADDRESS
+                  valueFrom:
+                    configMapKeyRef:
+                      name: cspm-aggregator-env
+                      key: MAIL_SENDER_ADDRESS
+                      optional: true
+              
+              # Secrets
+              envFrom:
+                - secretRef:
+                    name: cspm-aggregator-secrets
+              
+              # Volume mounts
+              volumeMounts:
+                - name: config
+                  mountPath: /app/configs
+                  readOnly: true
+                - name: reports
+                  mountPath: /app/reports
+                - name: tmp
+                  mountPath: /tmp
+          
+          volumes:
+            - name: config
+              configMap:
+                name: cspm-aggregator-config
+            - name: reports
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+
+---
+# ConfigMap for environment-specific values
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cspm-aggregator-env
+  namespace: cspm-system
+data:
+  GCP_ORG_ID: ""
+  ASANA_PROJECT_GID: ""
+  MAIL_SENDER_ADDRESS: ""

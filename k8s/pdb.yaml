@@ -1,0 +1,12 @@
+# PodDisruptionBudget - Ensure job completion during node maintenance
+# Note: For CronJobs, this primarily protects running job pods
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cspm-aggregator
+  namespace: cspm-system
+spec:
+  minAvailable: 0  # Allow disruption when no jobs running
+  selector:
+    matchLabels:
+      app: cspm-aggregator
