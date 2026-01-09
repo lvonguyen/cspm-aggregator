@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 850" width="1440" height="1020">
+  <style>
+    text { font-family: Georgia, 'Times New Roman', serif; font-size: 11px; fill: #333; }
+    .title { font-size: 22px; font-weight: 700; fill: #1a1a1a; }
+    .subtitle { font-size: 13px; font-weight: 500; fill: #666; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .box { fill: #fff; stroke: #e0e0e0; stroke-width: 1.5; }
+    .box-aws { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+    .box-azure { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+    .box-gcp { fill: #ecfdf5; stroke: #22c55e; stroke-width: 2; }
+    .box-core { fill: #eef2ff; stroke: #1e40af; stroke-width: 2; }
+    .box-ai { fill: #faf5ff; stroke: #8b5cf6; stroke-width: 2; }
+    .box-output { fill: #fef2f2; stroke: #ef4444; stroke-width: 2; }
+    .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .arrow-data { stroke: #3b82f6; stroke-width: 2; stroke-dasharray: 6,3; fill: none; marker-end: url(#arrowhead-blue); }
+    .label { font-size: 10px; fill: #64748b; font-weight: 500; }
+    .tech-label { font-size: 9px; fill: #94a3b8; }
+    .component-title { font-size: 11px; font-weight: 600; fill: #374151; }
+    .layer-bg { rx: 12; }
+    .icon-box { fill: #fff; stroke: #e5e7eb; stroke-width: 1; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+    </marker>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fafbfc"/>
+      <stop offset="100%" style="stop-color:#f1f5f9"/>
+    </linearGradient>
+
+    <!-- AWS Icon -->
+    <symbol id="icon-aws" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#FF9900"/>
+      <text x="64" y="78" text-anchor="middle" fill="white" font-size="32" font-weight="bold" font-family="Arial">AWS</text>
+    </symbol>
+
+    <!-- Azure Icon -->
+    <symbol id="icon-azure" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#0078D4"/>
+      <path fill="white" d="M35 95l25-60h10l-22 52h28l-6 8z"/>
+    </symbol>
+
+    <!-- GCP Icon -->
+    <symbol id="icon-gcp" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#4285F4"/>
+      <text x="64" y="78" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="Arial">GCP</text>
+    </symbol>
+
+    <!-- Go Icon -->
+    <symbol id="icon-go" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#00ADD8"/>
+      <text x="64" y="80" text-anchor="middle" fill="white" font-size="38" font-weight="bold" font-family="Arial">Go</text>
+    </symbol>
+
+    <!-- Kubernetes Icon -->
+    <symbol id="icon-k8s" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#326CE5"/>
+      <text x="64" y="78" text-anchor="middle" fill="white" font-size="26" font-weight="bold" font-family="Arial">K8s</text>
+    </symbol>
+
+    <!-- Anthropic/Claude Icon - "A\" logo -->
+    <symbol id="icon-claude" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#CC785C"/>
+      <!-- Left half of A -->
+      <path d="M44 104L64 24L84 104H70L66 90H50L44 104Z" fill="white"/>
+      <!-- Inner triangle cutout -->
+      <path d="M58 78L64 58L70 78H58Z" fill="#CC785C"/>
+      <!-- Backslash element -->
+      <path d="M76 24L100 104H86L62 24H76Z" fill="white"/>
+    </symbol>
+
+    <!-- Asana Icon -->
+    <symbol id="icon-asana" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#F06A6A"/>
+      <circle cx="64" cy="80" r="14" fill="white"/>
+      <circle cx="40" cy="50" r="14" fill="white"/>
+      <circle cx="88" cy="50" r="14" fill="white"/>
+    </symbol>
+
+    <!-- Microsoft Icon -->
+    <symbol id="icon-microsoft" viewBox="0 0 128 128">
+      <rect x="10" y="10" width="50" height="50" fill="#F25022"/>
+      <rect x="68" y="10" width="50" height="50" fill="#7FBA00"/>
+      <rect x="10" y="68" width="50" height="50" fill="#00A4EF"/>
+      <rect x="68" y="68" width="50" height="50" fill="#FFB900"/>
+    </symbol>
+
+    <!-- Docker Icon -->
+    <symbol id="icon-docker" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="20" fill="#2496ED"/>
+      <rect x="25" y="55" width="16" height="14" fill="white" rx="2"/>
+      <rect x="45" y="55" width="16" height="14" fill="white" rx="2"/>
+      <rect x="65" y="55" width="16" height="14" fill="white" rx="2"/>
+      <rect x="85" y="55" width="16" height="14" fill="white" rx="2"/>
+      <rect x="45" y="38" width="16" height="14" fill="white" rx="2"/>
+      <rect x="65" y="38" width="16" height="14" fill="white" rx="2"/>
+    </symbol>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="850" fill="url(#bg-gradient)"/>
+
+  <!-- Title Block -->
+  <text x="600" y="40" text-anchor="middle" class="title">CSPM Aggregator</text>
+  <text x="600" y="62" text-anchor="middle" class="subtitle">Multi-Cloud Security Posture Management with AI-Powered Scoring</text>
+
+  <!-- CLOUD PROVIDERS LAYER -->
+  <rect x="50" y="90" width="350" height="220" class="box layer-bg" style="fill:#f8fafc"/>
+  <text x="75" y="115" class="section-title" fill="#475569">Cloud Providers</text>
+  <text x="75" y="132" class="tech-label">Security Finding Sources</text>
+
+  <!-- AWS Security Hub -->
+  <rect x="70" y="150" width="150" height="70" class="box-aws" rx="8"/>
+  <rect x="80" y="160" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-aws" x="80" y="160" width="28" height="28"/>
+  <text x="115" y="178" class="component-title">Security Hub</text>
+  <text x="80" y="200" class="tech-label">OIDC Federation</text>
+  <text x="80" y="212" class="tech-label">NEW/NOTIFIED findings</text>
+
+  <!-- Azure Defender -->
+  <rect x="230" y="150" width="150" height="70" class="box-azure" rx="8"/>
+  <rect x="240" y="160" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-azure" x="240" y="160" width="28" height="28"/>
+  <text x="275" y="178" class="component-title">Defender</text>
+  <text x="240" y="200" class="tech-label">Managed Identity</text>
+  <text x="240" y="212" class="tech-label">Unhealthy assessments</text>
+
+  <!-- GCP SCC -->
+  <rect x="70" y="230" width="150" height="70" class="box-gcp" rx="8"/>
+  <rect x="80" y="240" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-gcp" x="80" y="240" width="28" height="28"/>
+  <text x="115" y="258" class="component-title">Security CC</text>
+  <text x="80" y="280" class="tech-label">Workload Identity</text>
+  <text x="80" y="292" class="tech-label">Active findings</text>
+
+  <!-- Arrow from providers -->
+  <path d="M 400 200 L 450 200" class="arrow"/>
+  <text x="405" y="192" class="label">Raw Findings</text>
+
+  <!-- PROCESSING LAYER -->
+  <rect x="450" y="90" width="350" height="470" class="box-core layer-bg"/>
+  <rect x="470" y="100" width="24" height="24" rx="4" class="icon-box"/>
+  <use xlink:href="#icon-go" x="470" y="100" width="24" height="24"/>
+  <text x="500" y="115" class="section-title" fill="#1e40af">Processing Pipeline</text>
+  <text x="500" y="132" class="tech-label">Go 1.23+ / Kubernetes CronJob</text>
+
+  <!-- Normalizer -->
+  <rect x="475" y="150" width="140" height="50" class="box" rx="6"/>
+  <rect x="485" y="160" width="24" height="24" rx="4" style="fill:#1e40af"/>
+  <text x="491" y="177" fill="white" font-size="10" font-weight="bold">N</text>
+  <text x="517" y="175" class="component-title">Normalizer</text>
+  <text x="517" y="190" class="tech-label">Common schema</text>
+
+  <path d="M 545 200 L 545 215" class="arrow"/>
+
+  <!-- Delta Detection -->
+  <rect x="475" y="220" width="140" height="50" class="box" rx="6"/>
+  <rect x="485" y="230" width="24" height="24" rx="4" style="fill:#1e40af"/>
+  <text x="490" y="247" fill="white" font-size="12" font-weight="bold">Δ</text>
+  <text x="517" y="245" class="component-title">Delta Detection</text>
+  <text x="517" y="260" class="tech-label">NEW/EXISTING/CLOSED</text>
+
+  <path d="M 545 270 L 545 290" class="arrow"/>
+
+  <!-- Risk Scorer -->
+  <rect x="475" y="295" width="140" height="60" class="box-ai" rx="6"/>
+  <rect x="485" y="305" width="24" height="24" rx="4" style="fill:#8b5cf6"/>
+  <text x="491" y="322" fill="white" font-size="10" font-weight="bold">AI</text>
+  <text x="517" y="320" class="component-title">Risk Scorer</text>
+  <text x="517" y="335" class="tech-label">30+ context signals</text>
+  <text x="517" y="347" class="tech-label">Severity adjustment</text>
+
+  <path d="M 545 355 L 545 375" class="arrow"/>
+
+  <!-- Complexity Normalizer -->
+  <rect x="475" y="380" width="140" height="60" class="box-ai" rx="6"/>
+  <rect x="485" y="390" width="24" height="24" rx="4" style="fill:#8b5cf6"/>
+  <text x="491" y="407" fill="white" font-size="10" font-weight="bold">AI</text>
+  <text x="517" y="405" class="component-title">Complexity</text>
+  <text x="517" y="420" class="tech-label">25+ rules + AI fallback</text>
+  <text x="517" y="432" class="tech-label">Tier 1/2/3 classification</text>
+
+  <path d="M 545 440 L 545 460" class="arrow"/>
+
+  <!-- Priority Matrix -->
+  <rect x="475" y="465" width="140" height="60" class="box" rx="6"/>
+  <rect x="485" y="475" width="24" height="24" rx="4" style="fill:#1e40af"/>
+  <text x="492" y="492" fill="white" font-size="10" font-weight="bold">P</text>
+  <text x="517" y="490" class="component-title">Priority Matrix</text>
+  <text x="517" y="505" class="tech-label">Risk × Complexity</text>
+  <text x="517" y="517" class="tech-label">P1-P5 + SLA tracking</text>
+
+  <!-- AI Service (lateral) -->
+  <rect x="640" y="295" width="140" height="145" class="box-ai" rx="8"/>
+  <rect x="655" y="310" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-claude" x="655" y="310" width="28" height="28"/>
+  <text x="690" y="327" class="component-title">Claude API</text>
+  <text x="655" y="360" class="tech-label">Anthropic</text>
+  <text x="655" y="375" class="tech-label">claude-opus-4-5</text>
+  <rect x="655" y="390" width="110" height="18" rx="3" style="fill:#f3e8ff;stroke:#c4b5fd"/>
+  <text x="710" y="402" text-anchor="middle" class="tech-label" style="fill:#7c3aed">temp=0.1</text>
+  <rect x="655" y="415" width="110" height="18" rx="3" style="fill:#f3e8ff;stroke:#c4b5fd"/>
+  <text x="710" y="427" text-anchor="middle" class="tech-label" style="fill:#7c3aed">JSON mode</text>
+
+  <!-- Arrows to AI -->
+  <path d="M 615 325 L 638 340" class="arrow-data"/>
+  <path d="M 615 410 L 638 395" class="arrow-data"/>
+
+  <!-- Arrow to outputs -->
+  <path d="M 800 370 L 850 370" class="arrow"/>
+  <text x="805" y="362" class="label">Prioritized</text>
+
+  <!-- OUTPUTS LAYER -->
+  <rect x="850" y="90" width="300" height="470" class="box layer-bg" style="fill:#fef2f2"/>
+  <text x="875" y="115" class="section-title" fill="#dc2626">Outputs</text>
+  <text x="875" y="132" class="tech-label">Workflow Automation</text>
+
+  <!-- Asana -->
+  <rect x="875" y="150" width="130" height="60" class="box" rx="8"/>
+  <rect x="885" y="160" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-asana" x="885" y="160" width="28" height="28"/>
+  <text x="920" y="178" class="component-title">Asana</text>
+  <text x="885" y="198" class="tech-label">Task creation</text>
+
+  <!-- Email -->
+  <rect x="1015" y="150" width="120" height="60" class="box" rx="8"/>
+  <rect x="1025" y="160" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-microsoft" x="1025" y="160" width="28" height="28"/>
+  <text x="1060" y="178" class="component-title">Email</text>
+  <text x="1025" y="198" class="tech-label">MS Graph API</text>
+
+  <!-- Reports -->
+  <rect x="875" y="230" width="130" height="60" class="box" rx="8"/>
+  <rect x="885" y="240" width="28" height="28" rx="6" style="fill:#475569"/>
+  <text x="893" y="259" fill="white" font-size="10" font-weight="bold">R</text>
+  <text x="920" y="258" class="component-title">Reports</text>
+  <text x="885" y="278" class="tech-label">HTML / CSV</text>
+
+  <!-- State Storage -->
+  <rect x="1015" y="230" width="120" height="60" class="box-azure" rx="8"/>
+  <rect x="1025" y="240" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-azure" x="1025" y="240" width="28" height="28"/>
+  <text x="1060" y="258" class="component-title">Blob</text>
+  <text x="1025" y="278" class="tech-label">State persistence</text>
+
+  <!-- Dashboard (future) -->
+  <rect x="875" y="310" width="260" height="60" class="box" rx="8" style="stroke-dasharray:4,4"/>
+  <text x="1005" y="340" text-anchor="middle" class="component-title" style="fill:#94a3b8">HTTP API (v1.1)</text>
+  <text x="1005" y="358" text-anchor="middle" class="tech-label">Findings query / Dashboard</text>
+
+  <!-- INFRASTRUCTURE LAYER -->
+  <rect x="50" y="590" width="1100" height="180" class="box-azure layer-bg"/>
+  <rect x="70" y="600" width="24" height="24" rx="4" class="icon-box"/>
+  <use xlink:href="#icon-k8s" x="70" y="600" width="24" height="24"/>
+  <text x="100" y="615" class="section-title" fill="#2563eb">Infrastructure</text>
+  <text x="100" y="632" class="tech-label">Azure Kubernetes Service (AKS)</text>
+
+  <!-- CronJob -->
+  <rect x="75" y="655" width="180" height="90" class="box" rx="8"/>
+  <rect x="90" y="670" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-k8s" x="90" y="670" width="28" height="28"/>
+  <text x="125" y="687" class="component-title">CronJob</text>
+  <text x="90" y="715" class="tech-label">Monthly (1st @ 8:00 AM PT)</text>
+  <text x="90" y="730" class="tech-label">Concurrency: Forbid</text>
+
+  <!-- Pod Security -->
+  <rect x="275" y="655" width="180" height="90" class="box" rx="8"/>
+  <rect x="290" y="670" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-k8s" x="290" y="670" width="28" height="28"/>
+  <text x="325" y="687" class="component-title">Pod Security</text>
+  <text x="290" y="715" class="tech-label">Non-root (uid 1000)</text>
+  <text x="290" y="730" class="tech-label">Read-only filesystem</text>
+
+  <!-- Workload Identity -->
+  <rect x="475" y="655" width="180" height="90" class="box" rx="8"/>
+  <rect x="490" y="670" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-azure" x="490" y="670" width="28" height="28"/>
+  <text x="525" y="687" class="component-title">Workload Identity</text>
+  <text x="490" y="715" class="tech-label">Azure AD federation</text>
+  <text x="490" y="730" class="tech-label">Zero credentials</text>
+
+  <!-- Key Vault -->
+  <rect x="675" y="655" width="180" height="90" class="box" rx="8"/>
+  <rect x="690" y="670" width="28" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-azure" x="690" y="670" width="28" height="28"/>
+  <text x="725" y="687" class="component-title">Key Vault</text>
+  <text x="690" y="715" class="tech-label">API keys (Anthropic)</text>
+  <text x="690" y="730" class="tech-label">Managed rotation</text>
+
+  <!-- Network Policy -->
+  <rect x="875" y="655" width="180" height="90" class="box" rx="8"/>
+  <rect x="890" y="670" width="28" height="28" rx="6" style="fill:#ef4444"/>
+  <text x="898" y="689" fill="white" font-size="10" font-weight="bold">NP</text>
+  <text x="925" y="687" class="component-title">Network Policy</text>
+  <text x="890" y="715" class="tech-label">Egress: DNS + HTTPS</text>
+  <text x="890" y="730" class="tech-label">No private ranges</text>
+
+  <!-- Container Image -->
+  <rect x="1075" y="655" width="55" height="90" class="box" rx="8"/>
+  <rect x="1082" y="670" width="40" height="28" rx="6" class="icon-box"/>
+  <use xlink:href="#icon-docker" x="1082" y="670" width="40" height="28"/>
+  <text x="1102" y="730" text-anchor="middle" class="tech-label">Alpine</text>
+
+  <!-- Version & Branding -->
+  <text x="1130" y="835" text-anchor="end" class="tech-label">v1.0 — 2026-01-08</text>
+  <rect x="50" y="820" width="140" height="18" rx="4" style="fill:#e2e8f0"/>
+  <text x="120" y="832" text-anchor="middle" fill="#475569" font-size="10" font-weight="600">CSPM Aggregator</text>
+</svg>

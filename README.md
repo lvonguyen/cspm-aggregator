@@ -21,6 +21,11 @@ CSPM Aggregator transforms raw security findings from AWS Security Hub, Azure De
 
 ## Architecture
 
+![System Architecture](docs/diagrams/hld_architecture.png)
+
+<details>
+<summary>Text diagram (expand)</summary>
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         CSPM Aggregator Platform                            │
@@ -46,6 +51,8 @@ CSPM Aggregator transforms raw security findings from AWS Security Hub, Azure De
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+</details>
 
 ## Key Features
 
@@ -144,11 +151,16 @@ cspm-aggregator/
 │   ├── aws-oidc/                # AWS OIDC federation
 │   └── gcp-wif/                 # GCP Workload Identity
 ├── docs/
-│   └── HLD.md                   # High-Level Design
+│   ├── HLD_CSPM_Aggregator.md   # High-Level Design
+│   ├── DDD_CSPM_Aggregator.md   # Detailed Design Document
+│   ├── diagrams/                # Architecture & DFD diagrams
+│   └── exports/                 # DOCX exports
 └── README.md
 ```
 
 ## AI Scoring Deep Dive
+
+![Scoring Pipeline](docs/diagrams/dfd_scoring_pipeline.png)
 
 ### Contextual Risk Scoring
 
@@ -181,6 +193,8 @@ AI Assessment:
 | **Tier 3** | Database config, network redesign, critical patches | Manual + coordination |
 
 ### Priority Matrix
+
+![Priority Matrix](docs/diagrams/dfd_priority_matrix.png)
 
 |                 | Tier 1 | Tier 2 | Tier 3 |
 |-----------------|--------|--------|--------|

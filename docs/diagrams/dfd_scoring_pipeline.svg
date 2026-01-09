@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 520">
+  <style>
+    text { font-family: Georgia, 'Times New Roman', serif; font-size: 11px; fill: #333; }
+    .title { font-size: 18px; font-weight: 700; fill: #1a1a1a; }
+    .section-title { font-size: 12px; font-weight: 600; fill: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .box { fill: #fff; stroke: #e2e8f0; stroke-width: 1.5; }
+    .cloud-aws { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+    .cloud-azure { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+    .cloud-gcp { fill: #ecfdf5; stroke: #22c55e; stroke-width: 2; }
+    .process { fill: #eef2ff; stroke: #1e40af; stroke-width: 2; }
+    .ai { fill: #faf5ff; stroke: #8b5cf6; stroke-width: 2; }
+    .storage { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+    .output { fill: #fef2f2; stroke: #ef4444; stroke-width: 2; }
+    .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    .arrow-data { stroke: #3b82f6; stroke-width: 2; stroke-dasharray: 5,3; fill: none; marker-end: url(#arrow-blue); }
+    .label { font-size: 9px; fill: #64748b; font-weight: 500; }
+    .component-title { font-size: 11px; font-weight: 600; fill: #1e293b; }
+    .tech-label { font-size: 9px; fill: #94a3b8; }
+    .section-box { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 8,4; }
+    .stage-num { font-size: 10px; fill: white; font-weight: 600; }
+  </style>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/>
+    </marker>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fafbfc"/>
+      <stop offset="100%" style="stop-color:#f1f5f9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="520" fill="url(#bg-gradient)"/>
+
+  <!-- Title -->
+  <text x="600" y="32" text-anchor="middle" class="title">Data Flow Diagram - AI Scoring Pipeline</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 1: CLOUD PROVIDERS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="30" y="60" width="150" height="200" class="section-box" rx="10"/>
+  <circle cx="50" cy="80" r="12" fill="#1e40af"/>
+  <text x="50" y="84" text-anchor="middle" class="stage-num">1</text>
+  <text x="70" y="84" class="section-title">Query</text>
+
+  <!-- AWS -->
+  <rect x="45" y="100" width="120" height="40" class="cloud-aws" rx="6"/>
+  <text x="105" y="124" text-anchor="middle" class="component-title">AWS Security Hub</text>
+
+  <!-- Azure -->
+  <rect x="45" y="150" width="120" height="40" class="cloud-azure" rx="6"/>
+  <text x="105" y="174" text-anchor="middle" class="component-title">Azure Defender</text>
+
+  <!-- GCP -->
+  <rect x="45" y="200" width="120" height="40" class="cloud-gcp" rx="6"/>
+  <text x="105" y="224" text-anchor="middle" class="component-title">GCP SCC</text>
+
+  <path d="M 180 170 L 215 170" class="arrow"/>
+  <text x="182" y="162" class="label">Raw</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 2: NORMALIZE -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="210" y="60" width="130" height="200" class="section-box" rx="10"/>
+  <circle cx="230" cy="80" r="12" fill="#1e40af"/>
+  <text x="230" y="84" text-anchor="middle" class="stage-num">2</text>
+  <text x="250" y="84" class="section-title">Normalize</text>
+
+  <rect x="225" y="130" width="100" height="70" class="process" rx="6"/>
+  <text x="275" y="160" text-anchor="middle" class="component-title">Normalizer</text>
+  <text x="275" y="178" text-anchor="middle" class="tech-label">Common schema</text>
+  <text x="275" y="192" text-anchor="middle" class="tech-label">Dedup key (SHA256)</text>
+
+  <path d="M 340 170 L 370 170" class="arrow"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 3: ENRICH -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="365" y="60" width="130" height="200" class="section-box" rx="10"/>
+  <circle cx="385" cy="80" r="12" fill="#1e40af"/>
+  <text x="385" y="84" text-anchor="middle" class="stage-num">3</text>
+  <text x="405" y="84" class="section-title">Enrich</text>
+
+  <rect x="380" y="110" width="100" height="55" class="process" rx="6"/>
+  <text x="430" y="135" text-anchor="middle" class="component-title">Org Metadata</text>
+  <text x="430" y="152" text-anchor="middle" class="tech-label">CBU, Tier, Owner</text>
+
+  <rect x="380" y="175" width="100" height="55" class="process" rx="6"/>
+  <text x="430" y="200" text-anchor="middle" class="component-title">Delta Detection</text>
+  <text x="430" y="217" text-anchor="middle" class="tech-label">vs Previous State</text>
+
+  <path d="M 495 170 L 525 170" class="arrow"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 4: AI RISK SCORING -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="520" y="60" width="150" height="200" class="section-box" rx="10"/>
+  <circle cx="540" cy="80" r="12" fill="#8b5cf6"/>
+  <text x="540" y="84" text-anchor="middle" class="stage-num">4</text>
+  <text x="570" y="84" class="section-title">Risk Score</text>
+
+  <rect x="535" y="105" width="120" height="85" class="ai" rx="6"/>
+  <rect x="545" y="115" width="24" height="24" rx="4" style="fill:#8b5cf6"/>
+  <text x="551" y="132" fill="white" font-size="9" font-weight="bold">AI</text>
+  <text x="577" y="130" class="component-title">Risk Scorer</text>
+  <text x="545" y="155" class="tech-label">30+ context signals</text>
+  <text x="545" y="170" class="tech-label">Severity adjustment</text>
+  <text x="545" y="185" class="tech-label">Guardrails applied</text>
+
+  <rect x="535" y="200" width="120" height="45" class="box" rx="6"/>
+  <text x="595" y="220" text-anchor="middle" class="component-title">Auto-Accept</text>
+  <text x="595" y="237" text-anchor="middle" class="tech-label">FP history check</text>
+
+  <path d="M 670 170 L 700 170" class="arrow"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 5: COMPLEXITY -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="695" y="60" width="150" height="200" class="section-box" rx="10"/>
+  <circle cx="715" cy="80" r="12" fill="#8b5cf6"/>
+  <text x="715" y="84" text-anchor="middle" class="stage-num">5</text>
+  <text x="745" y="84" class="section-title">Complexity</text>
+
+  <rect x="710" y="105" width="120" height="60" class="process" rx="6"/>
+  <text x="770" y="130" text-anchor="middle" class="component-title">Rule Engine</text>
+  <text x="770" y="148" text-anchor="middle" class="tech-label">25+ predefined rules</text>
+
+  <rect x="710" y="175" width="120" height="60" class="ai" rx="6"/>
+  <rect x="720" y="185" width="24" height="24" rx="4" style="fill:#8b5cf6"/>
+  <text x="726" y="202" fill="white" font-size="9" font-weight="bold">AI</text>
+  <text x="752" y="200" class="component-title">Fallback</text>
+  <text x="752" y="218" class="tech-label">Unknown types</text>
+
+  <path d="M 845 170 L 875 170" class="arrow"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 6: PRIORITY -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="870" y="60" width="130" height="200" class="section-box" rx="10"/>
+  <circle cx="890" cy="80" r="12" fill="#1e40af"/>
+  <text x="890" y="84" text-anchor="middle" class="stage-num">6</text>
+  <text x="920" y="84" class="section-title">Prioritize</text>
+
+  <rect x="885" y="105" width="100" height="55" class="process" rx="6"/>
+  <text x="935" y="130" text-anchor="middle" class="component-title">Matrix</text>
+  <text x="935" y="147" text-anchor="middle" class="tech-label">Risk x Complexity</text>
+
+  <rect x="885" y="170" width="100" height="55" class="process" rx="6"/>
+  <text x="935" y="195" text-anchor="middle" class="component-title">Escalations</text>
+  <text x="935" y="212" text-anchor="middle" class="tech-label">Prod, PCI, SLA</text>
+
+  <path d="M 1000 170 L 1030 170" class="arrow"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STAGE 7: OUTPUT -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="1025" y="60" width="140" height="200" class="section-box" rx="10"/>
+  <circle cx="1045" cy="80" r="12" fill="#ef4444"/>
+  <text x="1045" y="84" text-anchor="middle" class="stage-num">7</text>
+  <text x="1075" y="84" class="section-title">Output</text>
+
+  <rect x="1040" y="100" width="110" height="35" class="output" rx="6"/>
+  <text x="1095" y="122" text-anchor="middle" class="component-title">P1-P5 Queue</text>
+
+  <rect x="1040" y="145" width="110" height="35" class="output" rx="6"/>
+  <text x="1095" y="167" text-anchor="middle" class="component-title">SLA Tracking</text>
+
+  <rect x="1040" y="190" width="110" height="35" class="output" rx="6"/>
+  <text x="1095" y="212" text-anchor="middle" class="component-title">Quick Wins</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- CLAUDE API (Bottom) -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="520" y="300" width="325" height="80" class="ai" rx="10"/>
+  <rect x="540" y="320" width="32" height="32" rx="6" style="fill:#8b5cf6"/>
+  <text x="550" y="341" fill="white" font-size="11" font-weight="bold">C</text>
+  <text x="585" y="340" class="component-title" style="font-size:13px">Claude API (Anthropic)</text>
+  <text x="540" y="365" class="tech-label">Model: claude-opus-4-5-20250514 | Temperature: 0.1 | Max tokens: 1024</text>
+
+  <!-- Arrows to Claude -->
+  <path d="M 595 190 L 595 298" class="arrow-data"/>
+  <path d="M 770 235 L 770 298" class="arrow-data"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- BLOB STORAGE (Bottom Right) -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="900" y="300" width="150" height="80" class="storage" rx="10"/>
+  <rect x="920" y="320" width="32" height="32" rx="6" style="fill:#3b82f6"/>
+  <text x="930" y="341" fill="white" font-size="11" font-weight="bold">B</text>
+  <text x="965" y="340" class="component-title">Azure Blob</text>
+  <text x="920" y="365" class="tech-label">State persistence</text>
+  <text x="920" y="378" class="tech-label">Delta detection</text>
+
+  <!-- Arrow to Blob -->
+  <path d="M 430 232 L 430 340 L 898 340" class="arrow-data"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- Legend -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <rect x="30" y="420" width="500" height="65" class="box" rx="6"/>
+  <text x="50" y="445" class="section-title">Legend</text>
+
+  <rect x="50" y="457" width="40" height="16" class="process" rx="3"/>
+  <text x="98" y="469" class="tech-label">Processing</text>
+
+  <rect x="160" y="457" width="40" height="16" class="ai" rx="3"/>
+  <text x="208" y="469" class="tech-label">AI-Powered</text>
+
+  <rect x="280" y="457" width="40" height="16" class="storage" rx="3"/>
+  <text x="328" y="469" class="tech-label">Storage</text>
+
+  <rect x="400" y="457" width="40" height="16" class="output" rx="3"/>
+  <text x="448" y="469" class="tech-label">Output</text>
+
+  <!-- Version & Branding -->
+  <text x="1170" y="505" text-anchor="end" class="tech-label">v1.0 - 2026-01-08</text>
+  <rect x="30" y="490" width="140" height="18" rx="4" style="fill:#e2e8f0"/>
+  <text x="100" y="502" text-anchor="middle" fill="#475569" font-size="10" font-weight="600">CSPM Aggregator</text>
+</svg>
