@@ -1,0 +1,55 @@
+# RunPod SSH Configuration - 2x NVIDIA B200 GPU Instance
+# Generated for cspm-aggregator development/training workloads
+#
+# Usage:
+#   1. Retrieve SSH key from 1Password: ./get-ssh-key.sh
+#   2. Connect: ssh runpod-b200
+#
+# 1Password Reference: op://Private/RunPod-B200-SSH/private_key
+
+# Primary B200 2x GPU Pod
+Host runpod-b200
+    HostName ssh.runpod.io
+    User root
+    Port 22
+    IdentityFile ~/.ssh/runpod-b200
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+    UserKnownHostsFile ~/.ssh/known_hosts.runpod
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    TCPKeepAlive yes
+    Compression yes
+    # GPU-optimized connection settings
+    ForwardAgent no
+    ForwardX11 no
+    RequestTTY auto
+
+# Alternative: Direct TCP connection (for tunneling/port forwarding)
+Host runpod-b200-tunnel
+    HostName ssh.runpod.io
+    User root
+    Port 22
+    IdentityFile ~/.ssh/runpod-b200
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+    UserKnownHostsFile ~/.ssh/known_hosts.runpod
+    ServerAliveInterval 30
+    ServerAliveCountMax 5
+    TCPKeepAlive yes
+    Compression no
+    # Port forwarding for Jupyter/TensorBoard
+    LocalForward 8888 localhost:8888
+    LocalForward 6006 localhost:6006
+    # NCCL multi-GPU ports
+    LocalForward 29500 localhost:29500
+
+# RunPod Web Terminal fallback
+Host runpod-b200-web
+    HostName ssh.runpod.io
+    User root
+    Port 22
+    IdentityFile ~/.ssh/runpod-b200
+    IdentitiesOnly yes
+    ProxyCommand none
+    RequestTTY force

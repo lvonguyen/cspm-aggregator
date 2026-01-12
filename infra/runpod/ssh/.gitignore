@@ -1,0 +1,13 @@
+# Never commit private keys
+*.pem
+id_*
+!id_*.pub
+runpod-b200
+known_hosts*
+
+# Local environment
+.env
+
+# Temporary files
+*.tmp
+*.bak
