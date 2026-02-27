@@ -80,6 +80,13 @@ type FindingContext struct {
 	AttackPathScore    float64 `json:"attack_path_score,omitempty"` // 0-100
 	IsToxicCombination bool    `json:"is_toxic_combination"`
 	BlastRadiusCount   int     `json:"blast_radius_count,omitempty"`
+
+	// Network rule context (for FN escalation rules)
+	IngressCIDRs []string `json:"ingress_cidrs,omitempty"` // e.g., ["10.0.0.0/8", "0.0.0.0/0"]
+
+	// Credential context (for FN escalation rules)
+	CredentialLastUsedDays int  `json:"credential_last_used_days,omitempty"`
+	HasAdminPermissions    bool `json:"has_admin_permissions"`
 }
 
 // RiskAssessment is the output of contextual risk scoring.
@@ -115,6 +122,30 @@ type RiskAssessment struct {
 	CompletionTokens int       `json:"completion_tokens,omitempty"`
 }
 
+// DeterministicRuleResult captures the output of a single deterministic FP or FN rule.
+// It contains enough information to build a RiskAssessment without importing pkg/contextual.
+type DeterministicRuleResult struct {
+	OriginalSeverity   string
+	AdjustedSeverity   string
+	Applied            bool
+	Confidence         float64
+	Reason             string
+	Pattern            string
+	SuggestedRiskScore int
+}
+
+// FPEvaluator evaluates deterministic false-positive suppression rules.
+// Defined in the consuming package (scoring) per Go interface ownership convention.
+type FPEvaluator interface {
+	Evaluate(f Finding) (*DeterministicRuleResult, bool)
+}
+
+// FNEvaluator evaluates deterministic false-negative escalation rules.
+// Defined in the consuming package (scoring) per Go interface ownership convention.
+type FNEvaluator interface {
+	Evaluate(f Finding) (*DeterministicRuleResult, bool)
+}
+
 // RiskScorer performs AI-powered contextual risk assessment.
 type RiskScorer struct {
 	llmProvider   LLMProvider
@@ -122,6 +153,8 @@ type RiskScorer struct {
 	fpStore       FPHistoryStore
 	promptBuilder *RiskScorerPromptBuilder
 	config        RiskScorerConfig
+	fpRuleEngine  FPEvaluator
+	fnRuleEngine  FNEvaluator
 }
 
 // RiskScorerConfig holds configuration for the risk scorer.
@@ -158,6 +191,8 @@ func DefaultRiskScorerConfig() RiskScorerConfig {
 }
 
 // NewRiskScorer creates a new contextual risk scorer.
+// The FP and FN rule engines default to nil (disabled). Use WithRuleEngines to
+// wire in deterministic rule evaluation.
 func NewRiskScorer(
 	llm LLMProvider,
 	enricher ContextEnricher,
@@ -171,6 +206,15 @@ func NewRiskScorer(
 		promptBuilder: NewRiskScorerPromptBuilder(),
 		config:        config,
 	}
+}
+
+// WithRuleEngines attaches deterministic FP suppression and FN escalation engines
+// to the scorer. Call this after NewRiskScorer when the contextual rule engines
+// are available (typically at the application wiring layer to avoid import cycles).
+func (rs *RiskScorer) WithRuleEngines(fp FPEvaluator, fn FNEvaluator) *RiskScorer {
+	rs.fpRuleEngine = fp
+	rs.fnRuleEngine = fn
+	return rs
 }
 
 // ScoreFinding performs contextual risk assessment on a finding.
@@ -192,6 +236,11 @@ func (rs *RiskScorer) ScoreFinding(ctx context.Context, finding *Finding) (*Risk
 
 	// Step 3: Check for auto-accept scenarios (skip LLM)
 	if assessment := rs.checkAutoAccept(finding); assessment != nil {
+		return assessment, nil
+	}
+
+	// Step 3.5: Check deterministic FP/FN rules
+	if assessment := rs.checkDeterministicRules(finding); assessment != nil {
 		return assessment, nil
 	}
 
@@ -268,6 +317,62 @@ func (rs *RiskScorer) checkAutoAccept(finding *Finding) *RiskAssessment {
 			AutoAcceptReason:   "high_fp_rate",
 			ScoredAt:           time.Now(),
 			ModelUsed:          "rule_based",
+		}
+	}
+
+	return nil
+}
+
+// checkDeterministicRules runs the FP and FN rule engines in priority order.
+// FP suppression is checked first; if a rule matches, the finding is returned
+// immediately without escalation checks. FN escalation is checked second.
+// Returns nil when no rule matches (caller should proceed to LLM scoring).
+func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment {
+	// FP rules have priority — suppress before escalating.
+	if rs.fpRuleEngine != nil {
+		if result, matched := rs.fpRuleEngine.Evaluate(*finding); matched {
+			riskScore := result.SuggestedRiskScore
+			if riskScore == 0 {
+				riskScore = severityToMinScore(result.AdjustedSeverity)
+			}
+			return &RiskAssessment{
+				OriginalSeverity:   finding.Severity,
+				AdjustedSeverity:   result.AdjustedSeverity,
+				SeverityChanged:    result.Applied,
+				SeverityDirection:  "downgraded",
+				RiskScore:          riskScore,
+				Confidence:         result.Confidence,
+				Rationale:          result.Reason,
+				MitigatingFactors:  []string{result.Reason},
+				RecommendedAction:  "accept_risk",
+				AutoAcceptEligible: true,
+				AutoAcceptReason:   result.Pattern,
+				ScoredAt:           time.Now(),
+				ModelUsed:          "rule_based",
+			}
+		}
+	}
+
+	// FN rules escalate findings the LLM might under-rate.
+	if rs.fnRuleEngine != nil {
+		if result, matched := rs.fnRuleEngine.Evaluate(*finding); matched {
+			riskScore := result.SuggestedRiskScore
+			if riskScore == 0 {
+				riskScore = severityToMinScore(result.AdjustedSeverity)
+			}
+			return &RiskAssessment{
+				OriginalSeverity:   finding.Severity,
+				AdjustedSeverity:   result.AdjustedSeverity,
+				SeverityChanged:    result.Applied,
+				SeverityDirection:  "upgraded",
+				RiskScore:          riskScore,
+				Confidence:         result.Confidence,
+				Rationale:          result.Reason,
+				AggravatingFactors: []string{result.Reason},
+				RecommendedAction:  "remediate",
+				ScoredAt:           time.Now(),
+				ModelUsed:          "rule_based",
+			}
 		}
 	}
 

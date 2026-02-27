@@ -34,8 +34,8 @@ func (m *mockLLMProvider) Stream(_ context.Context, _ CompletionRequest) (<-chan
 }
 
 func (m *mockLLMProvider) CountTokens(_ context.Context, _ string) (int, error) { return 0, nil }
-func (m *mockLLMProvider) ModelName() string                                     { return "mock-model" }
-func (m *mockLLMProvider) MaxContextLength() int                                 { return 100000 }
+func (m *mockLLMProvider) ModelName() string                                    { return "mock-model" }
+func (m *mockLLMProvider) MaxContextLength() int                                { return 100000 }
 func (m *mockLLMProvider) IsAvailable(_ context.Context) bool                   { return true }
 
 // mockContextEnricher sets a fixed AssetTier/EnvType on findings it enriches.
@@ -479,11 +479,11 @@ func TestApplyGuardrails_PackageUsageKnown_ConfidenceNotCapped(t *testing.T) {
 
 func TestApplyGuardrails_RiskScoreClamped_ToSeverityRange(t *testing.T) {
 	tests := []struct {
-		name         string
-		severity     string
-		inputScore   int
-		expectedMin  int
-		expectedMax  int
+		name        string
+		severity    string
+		inputScore  int
+		expectedMin int
+		expectedMax int
 	}{
 		{"critical low score clamped up", "CRITICAL", 50, 85, 100},
 		{"critical high score stays", "CRITICAL", 95, 85, 100},
@@ -941,5 +941,200 @@ func TestCompletionRequest_Clone_NilMessages(t *testing.T) {
 	clone := original.Clone()
 	if clone.Messages != nil {
 		t.Error("expected nil messages in clone when original has nil messages")
+	}
+}
+
+// --- Mock implementations for FP/FN evaluator interfaces ---
+
+// mockFPEvaluator is a controllable FPEvaluator for testing. When matchFn is
+// non-nil, it returns the configured result for any matching finding.
+type mockFPEvaluator struct {
+	result  *DeterministicRuleResult
+	matched bool
+}
+
+func (m *mockFPEvaluator) Evaluate(_ Finding) (*DeterministicRuleResult, bool) {
+	return m.result, m.matched
+}
+
+// mockFNEvaluator is a controllable FNEvaluator for testing.
+type mockFNEvaluator struct {
+	result  *DeterministicRuleResult
+	matched bool
+}
+
+func (m *mockFNEvaluator) Evaluate(_ Finding) (*DeterministicRuleResult, bool) {
+	return m.result, m.matched
+}
+
+// --- Tests for deterministic FP/FN rule integration ---
+
+// TestScoreFinding_DeterministicFPRule_SkipsLLM verifies that a finding
+// triggering an FP rule (simulating MP-04: dev env + HIGH + non-PCI) returns
+// a rule_based assessment without invoking the LLM.
+func TestScoreFinding_DeterministicFPRule_SkipsLLM(t *testing.T) {
+	// Mock LLM that fails — confirms the FP rule path skips the LLM entirely.
+	llm := &mockLLMProvider{err: fmt.Errorf("LLM must not be called for deterministic FP rule")}
+	enricher := &mockContextEnricher{}
+	fpStore := &mockFPHistoryStore{}
+
+	fpResult := &DeterministicRuleResult{
+		OriginalSeverity: "HIGH",
+		AdjustedSeverity: "LOW",
+		Applied:          true,
+		Confidence:       0.90,
+		Reason:           "non-production environment; severity dampened per MP-04 (EC-09, EC-21)",
+		Pattern:          "MP-04",
+	}
+	fpEval := &mockFPEvaluator{result: fpResult, matched: true}
+	fnEval := &mockFNEvaluator{matched: false}
+
+	config := newDefaultConfig()
+	rs := NewRiskScorer(llm, enricher, fpStore, config).WithRuleEngines(fpEval, fnEval)
+
+	finding := newTestFinding("HIGH")
+	finding.Context.EnvType = "dev"
+	finding.Context.DataClassification = "Internal"
+
+	result, err := rs.ScoreFinding(context.Background(), finding)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.ModelUsed != "rule_based" {
+		t.Errorf("expected model_used=rule_based, got %s", result.ModelUsed)
+	}
+	if result.SeverityDirection != "downgraded" {
+		t.Errorf("expected severity_direction=downgraded, got %s", result.SeverityDirection)
+	}
+	if result.RecommendedAction != "accept_risk" {
+		t.Errorf("expected recommended_action=accept_risk, got %s", result.RecommendedAction)
+	}
+	if !result.AutoAcceptEligible {
+		t.Error("expected auto_accept_eligible=true for FP rule result")
+	}
+	if result.AutoAcceptReason != "MP-04" {
+		t.Errorf("expected auto_accept_reason=MP-04, got %s", result.AutoAcceptReason)
+	}
+}
+
+// TestScoreFinding_DeterministicFNRule_SkipsLLM verifies that a finding
+// triggering an FN rule (simulating MP-10: STALE_ACCESS_KEY + LOW + "admin")
+// returns a rule_based assessment with upgraded severity without invoking the LLM.
+func TestScoreFinding_DeterministicFNRule_SkipsLLM(t *testing.T) {
+	// Mock LLM that fails — confirms the FN rule path skips the LLM entirely.
+	llm := &mockLLMProvider{err: fmt.Errorf("LLM must not be called for deterministic FN rule")}
+	enricher := &mockContextEnricher{}
+	fpStore := &mockFPHistoryStore{}
+
+	fnResult := &DeterministicRuleResult{
+		OriginalSeverity: "LOW",
+		AdjustedSeverity: "HIGH",
+		Applied:          true,
+		Confidence:       0.85,
+		Reason:           "dormant privileged credential is high-value attack target; MP-10 (EC-48)",
+		Pattern:          "MP-10",
+	}
+	fpEval := &mockFPEvaluator{matched: false}
+	fnEval := &mockFNEvaluator{result: fnResult, matched: true}
+
+	config := newDefaultConfig()
+	rs := NewRiskScorer(llm, enricher, fpStore, config).WithRuleEngines(fpEval, fnEval)
+
+	finding := newTestFinding("LOW")
+	finding.FindingType = "STALE_ACCESS_KEY"
+	finding.Description = "Stale access key for admin IAM user has not been rotated in 180 days."
+
+	result, err := rs.ScoreFinding(context.Background(), finding)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.ModelUsed != "rule_based" {
+		t.Errorf("expected model_used=rule_based, got %s", result.ModelUsed)
+	}
+	if result.AdjustedSeverity != "HIGH" {
+		t.Errorf("expected adjusted_severity=HIGH (MP-10 upgrade), got %s", result.AdjustedSeverity)
+	}
+	if result.SeverityDirection != "upgraded" {
+		t.Errorf("expected severity_direction=upgraded, got %s", result.SeverityDirection)
+	}
+	if result.RecommendedAction != "remediate" {
+		t.Errorf("expected recommended_action=remediate, got %s", result.RecommendedAction)
+	}
+}
+
+// TestScoreFinding_NoDeterministicMatch_FallsThrough verifies that a finding
+// that does not match any deterministic rule proceeds to the LLM path normally.
+func TestScoreFinding_NoDeterministicMatch_FallsThrough(t *testing.T) {
+	llm := &mockLLMProvider{
+		response: validLLMResponse("MEDIUM", 50, 0.80, "investigate"),
+	}
+	enricher := &mockContextEnricher{assetTier: "Tier1-Prod", envType: "prod"}
+	fpStore := &mockFPHistoryStore{}
+
+	// Both rule engines return no match.
+	fpEval := &mockFPEvaluator{matched: false}
+	fnEval := &mockFNEvaluator{matched: false}
+
+	config := newDefaultConfig()
+	rs := NewRiskScorer(llm, enricher, fpStore, config).WithRuleEngines(fpEval, fnEval)
+
+	finding := newTestFinding("HIGH")
+	finding.Context.EnvType = "prod"
+	finding.Context.DataClassification = "PCI"
+
+	result, err := rs.ScoreFinding(context.Background(), finding)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Must have gone through the LLM path — ModelUsed should be the config model name.
+	if result.ModelUsed == "rule_based" {
+		t.Error("expected LLM path (not rule_based) for finding with no deterministic rule match")
+	}
+	if result.ModelUsed != config.ModelName {
+		t.Errorf("expected model_used=%s, got %s", config.ModelName, result.ModelUsed)
+	}
+}
+
+// TestCheckDeterministicRules_FPPriorityOverFN verifies that when a finding
+// matches both an FP rule and an FN rule, the FP result is returned
+// (FP suppression has priority over FN escalation).
+func TestCheckDeterministicRules_FPPriorityOverFN(t *testing.T) {
+	fpResult := &DeterministicRuleResult{
+		OriginalSeverity: "HIGH",
+		AdjustedSeverity: "LOW",
+		Applied:          true,
+		Confidence:       0.90,
+		Reason:           "non-production environment; severity dampened per MP-04",
+		Pattern:          "MP-04",
+	}
+	fnResult := &DeterministicRuleResult{
+		OriginalSeverity: "HIGH",
+		AdjustedSeverity: "CRITICAL",
+		Applied:          true,
+		Confidence:       0.80,
+		Reason:           "privileged credential escalation",
+		Pattern:          "MP-10",
+	}
+	// Both engines match — FP must win.
+	fpEval := &mockFPEvaluator{result: fpResult, matched: true}
+	fnEval := &mockFNEvaluator{result: fnResult, matched: true}
+
+	config := newDefaultConfig()
+	rs := NewRiskScorer(nil, nil, nil, config).WithRuleEngines(fpEval, fnEval)
+
+	finding := newTestFinding("HIGH")
+	assessment := rs.checkDeterministicRules(finding)
+	if assessment == nil {
+		t.Fatal("expected a rule match, got nil")
+	}
+	// FP rules recommend accept_risk; FN rules recommend remediate.
+	if assessment.RecommendedAction != "accept_risk" {
+		t.Errorf("expected FP rule to take priority (accept_risk), got %s", assessment.RecommendedAction)
+	}
+	if assessment.SeverityDirection != "downgraded" {
+		t.Errorf("expected downgraded severity from FP rule, got %s", assessment.SeverityDirection)
+	}
+	if assessment.ModelUsed != "rule_based" {
+		t.Errorf("expected model_used=rule_based, got %s", assessment.ModelUsed)
 	}
 }
