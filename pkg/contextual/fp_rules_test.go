@@ -1,6 +1,7 @@
 package contextual
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/lvonguyen/cspm-aggregator/internal/scoring"
@@ -593,5 +594,166 @@ func TestFPRuleEngine_NoMatch_ReturnsNilFalse(t *testing.T) {
 	}
 	if result != nil {
 		t.Error("expected nil result when no rule matches")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// MP-11: ICS Protocol Port Contextualizer
+// ---------------------------------------------------------------------------
+
+func TestFP_MP11_ICSPort_Triggers_OpenSGWithOPCUA(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// OPEN_SECURITY_GROUP + OPC-UA port 4840 — should trigger
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "OPEN_SECURITY_GROUP_4840",
+		Context: scoring.FindingContext{
+			IngressPorts: []int{4840},
+		},
+	}
+
+	result, ok := engine.Evaluate(f)
+	if !ok {
+		t.Fatal("MP-11 expected to match OPEN_SECURITY_GROUP with OPC-UA port 4840, got no match")
+	}
+	if result.Pattern != "MP-11" {
+		t.Errorf("expected pattern MP-11, got %s", result.Pattern)
+	}
+	if result.AdjustedSeverity != "MEDIUM" {
+		t.Errorf("expected HIGH downgraded 1 level to MEDIUM, got %s", result.AdjustedSeverity)
+	}
+	if result.Confidence != 0.75 {
+		t.Errorf("expected confidence 0.75, got %f", result.Confidence)
+	}
+	if result.Applied != true {
+		t.Error("expected Applied=true")
+	}
+}
+
+func TestFP_MP11_ICSPort_Triggers_MultipleICSPorts(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// Multiple ICS ports — any intersection should trigger
+	f := scoring.Finding{
+		Severity:    "CRITICAL",
+		FindingType: "OPEN_SECURITY_GROUP_MULTI",
+		Context: scoring.FindingContext{
+			IngressPorts: []int{80, 443, 102, 8080},
+		},
+	}
+
+	result, ok := engine.Evaluate(f)
+	if !ok {
+		t.Fatal("MP-11 expected to match when IngressPorts includes S7comm port 102, got no match")
+	}
+	if result.Pattern != "MP-11" {
+		t.Errorf("expected pattern MP-11, got %s", result.Pattern)
+	}
+	if result.AdjustedSeverity != "HIGH" {
+		t.Errorf("expected CRITICAL downgraded 1 level to HIGH, got %s", result.AdjustedSeverity)
+	}
+}
+
+func TestFP_MP11_ICSPort_Triggers_AllPortsInTable(t *testing.T) {
+	icsPorts := []int{102, 8883, 4840, 20000, 2404, 44818}
+	engine := NewFPRuleEngine(nil)
+
+	for _, port := range icsPorts {
+		f := scoring.Finding{
+			Severity:    "HIGH",
+			FindingType: "OPEN_SECURITY_GROUP",
+			Context: scoring.FindingContext{
+				IngressPorts: []int{port},
+			},
+		}
+
+		result, ok := engine.Evaluate(f)
+		if !ok {
+			t.Errorf("MP-11 expected to match ICS port %d in OPEN_SECURITY_GROUP finding, got no match", port)
+			continue
+		}
+		if result.Pattern != "MP-11" {
+			t.Errorf("port %d: expected pattern MP-11, got %s", port, result.Pattern)
+		}
+	}
+}
+
+func TestFP_MP11_ICSPort_NoTrigger_NonICSPorts(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// OPEN_SECURITY_GROUP but only standard web ports — no ICS ports
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "OPEN_SECURITY_GROUP",
+		Context: scoring.FindingContext{
+			IngressPorts: []int{443, 80},
+		},
+	}
+
+	_, ok := engine.Evaluate(f)
+	if ok {
+		t.Error("MP-11 should NOT trigger when IngressPorts contains no ICS ports")
+	}
+}
+
+func TestFP_MP11_ICSPort_NoTrigger_WrongFindingType(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// ICS port present but finding type is not OPEN_SECURITY_GROUP
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "RDS_PUBLIC_ACCESS_ENABLED",
+		Context: scoring.FindingContext{
+			IngressPorts: []int{4840, 20000},
+		},
+	}
+
+	_, ok := engine.Evaluate(f)
+	if ok {
+		t.Error("MP-11 should NOT trigger when FindingType does not contain OPEN_SECURITY_GROUP")
+	}
+}
+
+func TestFP_MP11_ICSPort_NoTrigger_EmptyIngressPorts(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// OPEN_SECURITY_GROUP but no ingress ports specified
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "OPEN_SECURITY_GROUP",
+		Context: scoring.FindingContext{
+			IngressPorts: []int{},
+		},
+	}
+
+	_, ok := engine.Evaluate(f)
+	if ok {
+		t.Error("MP-11 should NOT trigger when IngressPorts is empty")
+	}
+}
+
+func TestFP_MP11_ICSPort_NoteContainsICSMessage(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "OPEN_SECURITY_GROUP",
+		Context: scoring.FindingContext{
+			IngressPorts: []int{44818}, // EtherNet/IP
+		},
+	}
+
+	result, ok := engine.Evaluate(f)
+	if !ok {
+		t.Fatal("MP-11 expected to match OPEN_SECURITY_GROUP with EtherNet/IP port 44818, got no match")
+	}
+	if result.Pattern != "MP-11" {
+		t.Errorf("expected pattern MP-11, got %s", result.Pattern)
+	}
+	// Verify the reason contains the expected note
+	expectedNote := "ICS/IoT protocol port"
+	if !strings.Contains(result.Reason, expectedNote) {
+		t.Errorf("expected Reason to contain %q, got %q", expectedNote, result.Reason)
 	}
 }

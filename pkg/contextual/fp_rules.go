@@ -32,7 +32,7 @@ type FPRuleEngine struct {
 	rules []fpRule
 }
 
-// NewFPRuleEngine constructs an engine with MP-04 through MP-08 in priority order.
+// NewFPRuleEngine constructs an engine with MP-04 through MP-11 in priority order.
 // Pass a non-nil NVDStatusChecker to enable MP-07; pass nil to skip it.
 func NewFPRuleEngine(nvd NVDStatusChecker) *FPRuleEngine {
 	e := &FPRuleEngine{}
@@ -42,6 +42,7 @@ func NewFPRuleEngine(nvd NVDStatusChecker) *FPRuleEngine {
 		ruleMP06StaleRDSPublicAttr,
 		buildRuleMP07CVEStatusValidator(nvd),
 		ruleMP08KMSAsymmetricRotation,
+		ruleMP11ICSProtocolPort,
 	}
 	return e
 }
@@ -291,5 +292,64 @@ func ruleMP08KMSAsymmetricRotation(f scoring.Finding) (*FPRuleResult, bool) {
 			Applied:          true,
 		},
 		SuggestedRiskScore: 5,
+	}, true
+}
+
+// ---------------------------------------------------------------------------
+// MP-11: ICS Protocol Port Contextualizer
+//
+// Trigger: FindingType contains OPEN_SECURITY_GROUP
+//          AND Context.IngressPorts intersects the ICS protocol port table
+// Effect:  Downgrade 1 level, confidence 0.75
+// Pattern: MP-11
+// EC codes: EC-08
+// ---------------------------------------------------------------------------
+
+// mp11ICSPorts maps known ICS/OT protocol ports to their protocol names.
+// TCP 102  = S7comm (Siemens S7 PLC)
+// TCP 8883 = MQTT over TLS
+// TCP 4840 = OPC-UA
+// TCP 20000 = DNP3
+// TCP 2404  = IEC 104
+// TCP 44818 = EtherNet/IP
+var mp11ICSPorts = map[int]bool{
+	102:   true,
+	8883:  true,
+	4840:  true,
+	20000: true,
+	2404:  true,
+	44818: true,
+}
+
+// hasICSPort returns true when any port in ports is in the mp11ICSPorts table.
+func hasICSPort(ports []int) bool {
+	for _, p := range ports {
+		if mp11ICSPorts[p] {
+			return true
+		}
+	}
+	return false
+}
+
+func ruleMP11ICSProtocolPort(f scoring.Finding) (*FPRuleResult, bool) {
+	ft := strings.ToUpper(f.FindingType)
+	if !strings.Contains(ft, "OPEN_SECURITY_GROUP") {
+		return nil, false
+	}
+
+	if !hasICSPort(f.Context.IngressPorts) {
+		return nil, false
+	}
+
+	adjusted := downgradeSeverity(f.Severity, 1)
+	return &FPRuleResult{
+		SeverityAdjustment: SeverityAdjustment{
+			OriginalSeverity: f.Severity,
+			AdjustedSeverity: adjusted,
+			Reason:           "ICS/IoT protocol port — verify application-layer auth; MP-11 (EC-08)",
+			Confidence:       0.75,
+			Pattern:          "MP-11",
+			Applied:          adjusted != f.Severity,
+		},
 	}, true
 }
