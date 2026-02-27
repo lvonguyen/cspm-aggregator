@@ -1,6 +1,7 @@
 package contextual
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/lvonguyen/cspm-aggregator/internal/scoring"
@@ -208,7 +209,7 @@ func ruleMP06StaleRDSPublicAttr(f scoring.Finding) (*FPRuleResult, bool) {
 func cveIDFromFinding(f scoring.Finding) string {
 	ft := strings.ToUpper(f.FindingType)
 	if strings.HasPrefix(ft, "CVE-") {
-		return f.FindingType
+		return ft
 	}
 	return ""
 }
@@ -259,12 +260,14 @@ func buildRuleMP07CVEStatusValidator(nvd NVDStatusChecker) fpRule {
 // EC codes: EC-25
 // ---------------------------------------------------------------------------
 
-var mp08AsymmetricKeywords = []string{"asymmetric", "rsa", "ecc", "sm2"}
+// mp08AsymmetricPatterns matches whole-word asymmetric key spec keywords.
+// "ecc" uses word boundary to avoid matching "excessive", "success", etc.
+var mp08AsymmetricPatterns = []string{`(?i)\basymmetric\b`, `(?i)\brsa\b`, `(?i)\becc\b`, `(?i)\bsm2\b`}
 
 func containsAsymmetricKeyword(s string) bool {
-	lower := strings.ToLower(s)
-	for _, kw := range mp08AsymmetricKeywords {
-		if strings.Contains(lower, kw) {
+	for _, pattern := range mp08AsymmetricPatterns {
+		matched, _ := regexp.MatchString(pattern, s)
+		if matched {
 			return true
 		}
 	}

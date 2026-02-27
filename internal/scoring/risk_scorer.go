@@ -335,11 +335,15 @@ func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment 
 			if riskScore == 0 {
 				riskScore = severityToMinScore(result.AdjustedSeverity)
 			}
-			return &RiskAssessment{
+			dir := "downgraded"
+			if !result.Applied {
+				dir = "unchanged"
+			}
+			assessment := &RiskAssessment{
 				OriginalSeverity:   finding.Severity,
 				AdjustedSeverity:   result.AdjustedSeverity,
 				SeverityChanged:    result.Applied,
-				SeverityDirection:  "downgraded",
+				SeverityDirection:  dir,
 				RiskScore:          riskScore,
 				Confidence:         result.Confidence,
 				Rationale:          result.Reason,
@@ -350,6 +354,8 @@ func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment 
 				ScoredAt:           time.Now(),
 				ModelUsed:          "rule_based",
 			}
+			rs.applyGuardrails(assessment, finding)
+			return assessment
 		}
 	}
 
@@ -360,11 +366,15 @@ func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment 
 			if riskScore == 0 {
 				riskScore = severityToMinScore(result.AdjustedSeverity)
 			}
-			return &RiskAssessment{
+			dir := "upgraded"
+			if !result.Applied {
+				dir = "unchanged"
+			}
+			assessment := &RiskAssessment{
 				OriginalSeverity:   finding.Severity,
 				AdjustedSeverity:   result.AdjustedSeverity,
 				SeverityChanged:    result.Applied,
-				SeverityDirection:  "upgraded",
+				SeverityDirection:  dir,
 				RiskScore:          riskScore,
 				Confidence:         result.Confidence,
 				Rationale:          result.Reason,
@@ -373,6 +383,8 @@ func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment 
 				ScoredAt:           time.Now(),
 				ModelUsed:          "rule_based",
 			}
+			rs.applyGuardrails(assessment, finding)
+			return assessment
 		}
 	}
 

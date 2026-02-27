@@ -139,20 +139,23 @@ func extractCIDR(s string) string {
 // isBroadPrivateCIDR returns true when the CIDR is RFC1918 and its prefix
 // length is <= 12 (i.e., the network covers a very large address space).
 func isBroadPrivateCIDR(cidr string) bool {
-	ip, network, err := net.ParseCIDR(cidr)
+	_, network, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return false
 	}
 
 	// Only consider broad networks (prefix <= 12).
+	// Reject ones==0 (e.g. 0.0.0.0/0) — that's internet-wide, not a private range.
 	ones, _ := network.Mask.Size()
-	if ones > 12 {
+	if ones == 0 || ones > 12 {
 		return false
 	}
 
-	// Verify the IP falls within an RFC1918 range.
+	// Verify the network base IP falls within an RFC1918 range.
+	// Use network.IP (the masked base) not the host IP from ParseCIDR,
+	// so "10.5.3.1/8" correctly checks 10.0.0.0 against RFC1918.
 	for _, private := range mp09PrivateRanges {
-		if private.Contains(ip) {
+		if private.Contains(network.IP) {
 			return true
 		}
 	}
