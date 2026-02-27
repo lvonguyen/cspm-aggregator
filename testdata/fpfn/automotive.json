@@ -2052,7 +2052,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "IAM policy in KUS HIL (Hardware-in-the-Loop) test account allows sts:AssumeRole on *. Policy attached to CI/CD automation role for test environment provisioning. CSPM flags as critical privilege escalation vector.",
+    "scenario": "IAM policy in Brand1-US HIL (Hardware-in-the-Loop) test account allows sts:AssumeRole on *. Policy attached to CI/CD automation role for test environment provisioning. CSPM flags as critical privilege escalation vector.",
     "why_misclassified": "EC-09: Dev/test environment with no production data. HIL test accounts are isolated AWS accounts used only for automotive ECU hardware testing. AssumeRole on * is within account boundary only \u2014 no cross-account trust configured.",
     "detection_signal": "IAM policy allows sts:AssumeRole on * \u2014 HIGH: potential privilege escalation",
     "ground_truth": "Test-only account with no production data or cross-account trusts. Broad AssumeRole within account used for automated test fixture provisioning. Account boundary contains blast radius completely.",
