@@ -121,6 +121,49 @@ func TestMP04_EnvTierDampener_NoTrigger_LowSeverity(t *testing.T) {
 	}
 }
 
+func TestMP04_EnvTierDampener_Triggers_StagingHighNoSensitiveData(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// staging is non-prod and should trigger (not in prod/production/prd set)
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "S3_BUCKET_PUBLIC_READ",
+		Context: scoring.FindingContext{
+			EnvType:            "staging",
+			DataClassification: "Internal",
+		},
+	}
+
+	result, ok := engine.Evaluate(f)
+	if !ok {
+		t.Fatal("MP-04 should trigger on staging env with HIGH severity")
+	}
+	if result.Pattern != "MP-04" {
+		t.Errorf("expected pattern MP-04, got %s", result.Pattern)
+	}
+	if result.AdjustedSeverity != "LOW" {
+		t.Errorf("expected HIGH to be downgraded to LOW (2 levels), got %s", result.AdjustedSeverity)
+	}
+}
+
+func TestMP04_EnvTierDampener_NoTrigger_EmptyEnvType(t *testing.T) {
+	engine := NewFPRuleEngine(nil)
+
+	// empty env type should NOT trigger (conservative — treat as prod)
+	f := scoring.Finding{
+		Severity:    "HIGH",
+		FindingType: "S3_BUCKET_PUBLIC_READ",
+		Context: scoring.FindingContext{
+			DataClassification: "Internal",
+		},
+	}
+
+	_, ok := engine.Evaluate(f)
+	if ok {
+		t.Error("MP-04 should NOT trigger when EnvType is empty")
+	}
+}
+
 // ---------------------------------------------------------------------------
 // MP-05: WAF-Compensated Open SG Suppressor
 // ---------------------------------------------------------------------------

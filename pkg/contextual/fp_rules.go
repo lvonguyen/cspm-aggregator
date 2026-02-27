@@ -61,17 +61,21 @@ func (e *FPRuleEngine) Evaluate(f scoring.Finding) (*FPRuleResult, bool) {
 // ---------------------------------------------------------------------------
 // MP-04: Environment Tier Dampener
 //
-// Trigger: EnvType in {sandbox, dev, dev-simulation}
+// Trigger: EnvType is NOT prod/production/prd (i.e., any non-production env)
 //          AND Severity in {HIGH, CRITICAL}
 //          AND NOT DataClassification in {PCI, PII, PHI}
 // Effect:  Downgrade 2 levels, confidence 0.90
 // EC codes: EC-09, EC-21
 // ---------------------------------------------------------------------------
 
-var mp04NonProdEnvs = map[string]bool{
-	"sandbox":        true,
-	"dev":            true,
-	"dev-simulation": true,
+// mp04ProdEnvs are environment values that are explicitly production.
+// Anything NOT in this set is treated as non-production for dampening purposes.
+// This is safer than maintaining an ever-growing non-prod list because new
+// env names (qa-east, uat-02, perf-test, etc.) are automatically covered.
+var mp04ProdEnvs = map[string]bool{
+	"prod":       true,
+	"production": true,
+	"prd":        true,
 }
 
 var mp04SensitiveClassifications = map[string]bool{
@@ -82,7 +86,7 @@ var mp04SensitiveClassifications = map[string]bool{
 
 func ruleMP04EnvTierDampener(f scoring.Finding) (*FPRuleResult, bool) {
 	env := strings.ToLower(f.Context.EnvType)
-	if !mp04NonProdEnvs[env] {
+	if env == "" || mp04ProdEnvs[env] {
 		return nil, false
 	}
 
