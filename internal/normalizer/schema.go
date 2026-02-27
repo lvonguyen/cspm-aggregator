@@ -783,12 +783,16 @@ func parseTime(s string) time.Time {
 	return time.Time{}
 }
 
-// truncate limits a string to maxLen characters
+// truncate limits a string to maxLen runes, preserving multi-byte characters.
 func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
+	if maxLen <= 0 {
+		return ""
+	}
+	runes := []rune(s)
+	if len(runes) <= maxLen {
 		return s
 	}
-	return s[:maxLen]
+	return string(runes[:maxLen])
 }
 
 // parseAWSStandard extracts a human-readable standard name from an ARN

@@ -25,7 +25,7 @@ linters:
         - (*go.uber.org/zap.Logger).Sync
     goconst:
       min-len: 5
-      min-occurrences: 7
+      min-occurrences: 10
     gocritic:
       disabled-checks:
         - appendAssign

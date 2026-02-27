@@ -572,10 +572,21 @@ func (pb *RiskScorerPromptBuilder) BuildPrompt(finding *Finding) string {
 	ctx := finding.Context
 
 	sanitize := func(s string) string {
-		s = strings.ReplaceAll(s, "```", "")
-		s = strings.ReplaceAll(s, "## ", "")
-		if len(s) > 500 {
-			s = s[:500]
+		// Strip markdown/prompt injection patterns
+		for _, pat := range []string{"```", "## ", "# ", "---", "<script", "{{", "}}", "${", "SYSTEM:", "ASSISTANT:"} {
+			s = strings.ReplaceAll(s, pat, "")
+		}
+		// Remove control characters (keep printable ASCII + valid UTF-8)
+		s = strings.Map(func(r rune) rune {
+			if r < 0x20 && r != '\n' && r != '\t' {
+				return -1
+			}
+			return r
+		}, s)
+		// Rune-safe truncation
+		runes := []rune(s)
+		if len(runes) > 500 {
+			s = string(runes[:500])
 		}
 		return s
 	}

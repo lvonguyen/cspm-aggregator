@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	securitycenter "cloud.google.com/go/securitycenter/apiv1"
 	"cloud.google.com/go/securitycenter/apiv1/securitycenterpb"
@@ -97,10 +98,21 @@ func (p *SCCProvider) Name() string {
 	return "gcp-scc"
 }
 
-// extractProjectID extracts project ID from a resource name
+// extractProjectID extracts the project ID from a GCP resource name.
+// Resource names follow patterns like:
+//
+//	//cloudresourcemanager.googleapis.com/projects/{project-id}
+//	//compute.googleapis.com/projects/{project-id}/zones/...
+//	organizations/{org-id}/sources/{source-id}/findings/{finding-id}
 func extractProjectID(resourceName string) string {
-	// Resource names follow pattern: //cloudresourcemanager.googleapis.com/projects/{project-id}
-	// or //compute.googleapis.com/projects/{project-id}/...
-	// This is a simplified extraction
-	return resourceName
+	const prefix = "projects/"
+	idx := strings.Index(resourceName, prefix)
+	if idx == -1 {
+		return resourceName
+	}
+	rest := resourceName[idx+len(prefix):]
+	if slashIdx := strings.Index(rest, "/"); slashIdx != -1 {
+		return rest[:slashIdx]
+	}
+	return rest
 }
