@@ -12,18 +12,18 @@ import (
 
 // Finding represents a security finding to be scored.
 type Finding struct {
-	ID          string    `json:"id"`
-	Source      string    `json:"source"`       // aws-securityhub, azure-defender, gcp-scc
-	Severity    string    `json:"severity"`     // CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL
-	FindingType string    `json:"finding_type"` // e.g., S3_BUCKET_PUBLIC_READ, CVE-2024-1234
-	ResourceID  string    `json:"resource_id"`
-	ResourceType string   `json:"resource_type"` // e.g., AWS::S3::Bucket
-	Region      string    `json:"region"`
-	AccountID   string    `json:"account_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	FirstSeen   time.Time `json:"first_seen"`
-	DaysOpen    int       `json:"days_open"`
+	ID           string    `json:"id"`
+	Source       string    `json:"source"`       // aws-securityhub, azure-defender, gcp-scc
+	Severity     string    `json:"severity"`     // CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL
+	FindingType  string    `json:"finding_type"` // e.g., S3_BUCKET_PUBLIC_READ, CVE-2024-1234
+	ResourceID   string    `json:"resource_id"`
+	ResourceType string    `json:"resource_type"` // e.g., AWS::S3::Bucket
+	Region       string    `json:"region"`
+	AccountID    string    `json:"account_id"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	FirstSeen    time.Time `json:"first_seen"`
+	DaysOpen     int       `json:"days_open"`
 
 	// Context populated by enricher
 	Context FindingContext `json:"context"`
@@ -32,31 +32,31 @@ type Finding struct {
 // FindingContext provides business and technical context for risk assessment.
 type FindingContext struct {
 	// Asset classification
-	AssetTier          string `json:"asset_tier"`           // Tier1-Prod, Tier2-NonProd, Tier3-Dev
-	EnvType            string `json:"env_type"`             // prod, staging, dev, sandbox
-	DataClassification string `json:"data_classification"`  // PCI, PII, PHI, Public, Internal
+	AssetTier          string `json:"asset_tier"`          // Tier1-Prod, Tier2-NonProd, Tier3-Dev
+	EnvType            string `json:"env_type"`            // prod, staging, dev, sandbox
+	DataClassification string `json:"data_classification"` // PCI, PII, PHI, Public, Internal
 
 	// Network exposure
-	InternetFacing     bool     `json:"internet_facing"`
-	VPCType            string   `json:"vpc_type"`            // isolated, shared, transit
-	IngressPorts       []int    `json:"ingress_ports,omitempty"`
-	EgressRestricted   bool     `json:"egress_restricted"`
+	InternetFacing   bool   `json:"internet_facing"`
+	VPCType          string `json:"vpc_type"` // isolated, shared, transit
+	IngressPorts     []int  `json:"ingress_ports,omitempty"`
+	EgressRestricted bool   `json:"egress_restricted"`
 
 	// Compensating controls
-	WAFEnabled         bool `json:"waf_enabled"`
-	EDREnabled         bool `json:"edr_enabled"`
-	DLPEnabled         bool `json:"dlp_enabled"`
-	EncryptionAtRest   bool `json:"encryption_at_rest"`
+	WAFEnabled          bool `json:"waf_enabled"`
+	EDREnabled          bool `json:"edr_enabled"`
+	DLPEnabled          bool `json:"dlp_enabled"`
+	EncryptionAtRest    bool `json:"encryption_at_rest"`
 	EncryptionInTransit bool `json:"encryption_in_transit"`
-	MFARequired        bool `json:"mfa_required"`
-	PrivateEndpoint    bool `json:"private_endpoint"`
+	MFARequired         bool `json:"mfa_required"`
+	PrivateEndpoint     bool `json:"private_endpoint"`
 
 	// Vulnerability context (for CVE findings)
-	CVSSScore          float64 `json:"cvss_score,omitempty"`
-	ExploitAvailable   bool    `json:"exploit_available"`
-	ExploitInWild      bool    `json:"exploit_in_wild"`
-	PackageInUse       *bool   `json:"package_in_use,omitempty"` // nil = unknown
-	PatchAvailable     bool    `json:"patch_available"`
+	CVSSScore        float64 `json:"cvss_score,omitempty"`
+	ExploitAvailable bool    `json:"exploit_available"`
+	ExploitInWild    bool    `json:"exploit_in_wild"`
+	PackageInUse     *bool   `json:"package_in_use,omitempty"` // nil = unknown
+	PatchAvailable   bool    `json:"patch_available"`
 
 	// Historical patterns
 	FalsePositiveHistory int     `json:"false_positive_history"` // Count of FPs for similar findings
@@ -68,7 +68,17 @@ type FindingContext struct {
 	DataResidency       string   `json:"data_residency"`       // us, eu, apac
 	CostCenter          string   `json:"cost_center"`
 	ApplicationOwner    string   `json:"application_owner"`
-	SupportTier         string   `json:"support_tier"`         // platinum, gold, silver, bronze
+	SupportTier         string   `json:"support_tier"` // platinum, gold, silver, bronze
+
+	// Threat intelligence enrichment
+	InKEV          bool    `json:"in_kev"`               // CISA Known Exploited Vulnerabilities
+	EPSSScore      float64 `json:"epss_score,omitempty"` // 0.0-1.0 exploitation probability
+	EPSSPercentile float64 `json:"epss_percentile,omitempty"`
+
+	// Attack path context
+	AttackPathScore    float64 `json:"attack_path_score,omitempty"` // 0-100
+	IsToxicCombination bool    `json:"is_toxic_combination"`
+	BlastRadiusCount   int     `json:"blast_radius_count,omitempty"`
 }
 
 // RiskAssessment is the output of contextual risk scoring.
@@ -86,8 +96,8 @@ type RiskAssessment struct {
 	Confidence float64 `json:"confidence"` // 0.0-1.0
 
 	// Explanation
-	Rationale         string   `json:"rationale"`
-	MitigatingFactors []string `json:"mitigating_factors,omitempty"`
+	Rationale          string   `json:"rationale"`
+	MitigatingFactors  []string `json:"mitigating_factors,omitempty"`
 	AggravatingFactors []string `json:"aggravating_factors,omitempty"`
 
 	// Recommended action
@@ -98,27 +108,27 @@ type RiskAssessment struct {
 	AutoAcceptReason   string `json:"auto_accept_reason,omitempty"`
 
 	// Metadata
-	ScoredAt    time.Time `json:"scored_at"`
-	ModelUsed   string    `json:"model_used"`
-	PromptTokens int      `json:"prompt_tokens,omitempty"`
-	CompletionTokens int  `json:"completion_tokens,omitempty"`
+	ScoredAt         time.Time `json:"scored_at"`
+	ModelUsed        string    `json:"model_used"`
+	PromptTokens     int       `json:"prompt_tokens,omitempty"`
+	CompletionTokens int       `json:"completion_tokens,omitempty"`
 }
 
 // RiskScorer performs AI-powered contextual risk assessment.
 type RiskScorer struct {
-	llmProvider    LLMProvider
-	enricher       ContextEnricher
-	fpStore        FPHistoryStore
-	promptBuilder  *RiskScorerPromptBuilder
-	config         RiskScorerConfig
+	llmProvider   LLMProvider
+	enricher      ContextEnricher
+	fpStore       FPHistoryStore
+	promptBuilder *RiskScorerPromptBuilder
+	config        RiskScorerConfig
 }
 
 // RiskScorerConfig holds configuration for the risk scorer.
 type RiskScorerConfig struct {
 	// Model settings
-	ModelName       string
-	Temperature     float64
-	MaxTokens       int
+	ModelName   string
+	Temperature float64
+	MaxTokens   int
 
 	// Business rules
 	NeverDowngradeCriticalProdInternetFacing bool
@@ -134,7 +144,7 @@ type RiskScorerConfig struct {
 // DefaultRiskScorerConfig returns sensible defaults.
 func DefaultRiskScorerConfig() RiskScorerConfig {
 	return RiskScorerConfig{
-		ModelName:                                "claude-opus-4-5-20250514",
+		ModelName:                                "claude-opus-4-6",
 		Temperature:                              0.1,
 		MaxTokens:                                1024,
 		NeverDowngradeCriticalProdInternetFacing: true,
@@ -363,6 +373,23 @@ func (rs *RiskScorer) applyGuardrails(assessment *RiskAssessment, finding *Findi
 
 // Helper functions
 
+// envSeverityMultiplier returns the severity adjustment multiplier for the
+// given environment string. Mirrors the logic in pkg/contextual.EnvironmentTier.
+func envSeverityMultiplier(envType string) float64 {
+	switch envType {
+	case "prod", "production":
+		return 1.0
+	case "staging", "stg", "preprod":
+		return 0.8
+	case "dev", "development":
+		return 0.5
+	case "sandbox", "sbx", "test", "qa", "uat":
+		return 0.3
+	default:
+		return 1.0 // unknown — treat conservatively
+	}
+}
+
 func severityToInt(sev string) int {
 	switch strings.ToUpper(sev) {
 	case "CRITICAL":
@@ -509,6 +536,43 @@ func (pb *RiskScorerPromptBuilder) BuildPrompt(finding *Finding) string {
 		)
 	}
 
+	// Add threat intelligence context if present
+	if ctx.InKEV || ctx.EPSSScore > 0 || ctx.AttackPathScore > 0 {
+		prompt += fmt.Sprintf(`
+## Threat Intelligence
+- In CISA KEV: %t
+- EPSS Score: %.4f (percentile: %.2f)
+- Attack Path Score: %.1f
+- Toxic Combination: %t
+- Blast Radius (reachable resources): %d
+`,
+			ctx.InKEV,
+			ctx.EPSSScore,
+			ctx.EPSSPercentile,
+			ctx.AttackPathScore,
+			ctx.IsToxicCombination,
+			ctx.BlastRadiusCount,
+		)
+	}
+
+	// Add high-signal threat intelligence alerts as prominent standalone lines.
+	// These appear unconditionally when the relevant data is populated so the LLM
+	// cannot miss them when adjusting severity.
+	if ctx.EPSSScore > 0 {
+		prompt += fmt.Sprintf("EPSS exploitation probability: %.4f (percentile: %.2f)\n",
+			ctx.EPSSScore, ctx.EPSSPercentile)
+	}
+	if ctx.InKEV {
+		prompt += "WARNING: This CVE is in the CISA Known Exploited Vulnerabilities catalog\n"
+	}
+	if ctx.EnvType != "" {
+		prompt += fmt.Sprintf("Environment: %s (severity multiplier: %.1fx)\n",
+			ctx.EnvType, envSeverityMultiplier(ctx.EnvType))
+	}
+	if ctx.IsToxicCombination {
+		prompt += "ALERT: This finding is part of a toxic combination pattern\n"
+	}
+
 	prompt += `
 ## Instructions
 Based on the context above, provide a risk assessment. Consider:
@@ -517,6 +581,7 @@ Based on the context above, provide a risk assessment. Consider:
 3. Is the network exposure a significant factor?
 4. For vulnerabilities: Is the package actually in use? Is exploit available?
 5. Historical false positive patterns
+6. Threat intelligence signals (KEV, EPSS, attack paths) when available
 
 Respond with JSON only:
 {
@@ -603,4 +668,3 @@ type StreamChunk struct {
 	Done    bool   `json:"done"`
 	Error   error  `json:"error,omitempty"`
 }
-
