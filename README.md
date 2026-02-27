@@ -23,6 +23,66 @@ CSPM Aggregator transforms raw security findings from AWS Security Hub, Azure De
 
 ![System Architecture](docs/diagrams/hld_architecture.png)
 
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'fontFamily': 'Georgia'}}}%%
+flowchart LR
+    subgraph SOURCES["Cloud Sources"]
+        AWS["AWS\nSecurity Hub"]
+        AZ["Azure\nDefender for Cloud"]
+        GCP["GCP\nSecurity Command Center"]
+    end
+
+    subgraph PIPELINE["Processing Pipeline"]
+        NORM["Normalizer\nCommon Schema"]
+        AI["AI Scoring\nEngine"]
+        PM["Priority\nMatrix"]
+    end
+
+    subgraph AIENG["AI Engine"]
+        RS["Risk Scorer\nLLM + FP Detection"]
+        CN["Complexity\nNormalizer\n25+ Rules"]
+        PC["Priority\nCalculator\nP1–P5 + SLA"]
+    end
+
+    subgraph QUEUES["Output Queues"]
+        AUTO["Auto-Remediation\nP1-P2 + Tier 1"]
+        SEC["Security Review\nP1-P2 + Tier 2-3"]
+        APP["App Team\nCoordination Required"]
+        NORM2["Normal Queue\nP3-P5 Scheduled"]
+    end
+
+    AWS --> NORM
+    AZ  --> NORM
+    GCP --> NORM
+
+    NORM --> AI
+    AI   --> RS
+    AI   --> CN
+    AI   --> PC
+    RS   --> PM
+    CN   --> PM
+    PC   --> PM
+
+    PM --> AUTO
+    PM --> SEC
+    PM --> APP
+    PM --> NORM2
+
+    style AWS   fill:#f59e0b,color:#fff,stroke:#d97706
+    style AZ    fill:#3b82f6,color:#fff,stroke:#2563eb
+    style GCP   fill:#22c55e,color:#fff,stroke:#16a34a
+    style NORM  fill:#1e40af,color:#fff,stroke:#1e3a8a
+    style AI    fill:#1e40af,color:#fff,stroke:#1e3a8a
+    style PM    fill:#1e40af,color:#fff,stroke:#1e3a8a
+    style RS    fill:#1e40af,color:#fff,stroke:#1e3a8a
+    style CN    fill:#1e40af,color:#fff,stroke:#1e3a8a
+    style PC    fill:#1e40af,color:#fff,stroke:#1e3a8a
+    style AUTO  fill:#7c3aed,color:#fff,stroke:#6d28d9
+    style SEC   fill:#7c3aed,color:#fff,stroke:#6d28d9
+    style APP   fill:#7c3aed,color:#fff,stroke:#6d28d9
+    style NORM2 fill:#7c3aed,color:#fff,stroke:#6d28d9
+```
+
 <details>
 <summary>Text diagram (expand)</summary>
 
