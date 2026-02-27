@@ -41,10 +41,19 @@ func TestMapAWSFindingType_Mappings(t *testing.T) {
 	}{
 		{"TTPs/Privilege Escalation/AWS-iam-privilege-escalation", ClassPrivilegeEscalation},
 		{"TTPs/Initial Access/Backdoor", ClassThreat},
-		{"Unusual Behaviors/VM/Crypto Mining", ClassResourceAnomaly},
+		{"TTPs/Malware/Execution", ClassMalware},
+		{"TTPs/Container Runtime Threat", ClassContainerRuntimeThreat},
+		{"TTPs/Initial Access/container escape", ClassContainerRuntimeThreat},
+		{"Unusual Behaviors/VM/Impossible Travel", ClassResourceAnomaly},
+		{"Unusual Behaviors/VM/Crypto Mining", ClassCryptomining},
+		{"Unusual Behaviors/VM/CryptoMining/bitcoin", ClassCryptomining},
+		{"Unusual Behaviors/Kubernetes/API anomaly", ClassKubernetesAnomaly},
+		{"Unusual Behaviors/K8s/Exec into pod", ClassKubernetesAnomaly},
 		{"Effects/Data Exfiltration", ClassThreat},
 		{"Sensitive Data Identifications/PII", ClassSensitiveDataRisk},
 		{"Software and Configuration Checks/Vulnerabilities/CVE/CVE-2024-1234", ClassVulnerability},
+		{"Software and Configuration Checks/Vulnerabilities/CVE/Web XSS", ClassWebVulnerability},
+		{"Software and Configuration Checks/Vulnerabilities/CVE/SQLi injection", ClassWebVulnerability},
 		{"Software and Configuration Checks/Industry and Regulatory Standards/CIS", ClassMisconfiguration},
 		{"", ClassMisconfiguration},
 		{"Unknown/Random/Type", ClassMisconfiguration},
@@ -299,6 +308,12 @@ func TestClassMetadata_AllClasses(t *testing.T) {
 		ClassEncryptionWeakness,
 		ClassComplianceDrift,
 		ClassResourceAnomaly,
+		// Additional sub-classes
+		ClassWebVulnerability,
+		ClassMalware,
+		ClassCryptomining,
+		ClassKubernetesAnomaly,
+		ClassContainerRuntimeThreat,
 	}
 
 	for _, class := range allClasses {
@@ -332,8 +347,8 @@ func TestClassMetadata_UnknownClass_ReturnsZero(t *testing.T) {
 
 func TestClassMetadata_SpecificValues(t *testing.T) {
 	tests := []struct {
-		class            FindingClass
-		wantCategory     FindingClassCategory
+		class             FindingClass
+		wantCategory      FindingClassCategory
 		wantWeightAtLeast float64
 	}{
 		{ClassThreat, CategoryThreat, 1.3},
@@ -382,6 +397,43 @@ func TestClassMetadata_MITRETactics_ValidFormat(t *testing.T) {
 	}
 }
 
+// --- New sub-class metadata ---
+
+func TestClassMetadata_NewSubClasses(t *testing.T) {
+	tests := []struct {
+		class         FindingClass
+		wantCategory  FindingClassCategory
+		wantMinWeight float64
+	}{
+		{ClassWebVulnerability, CategoryVulnerability, 1.2},
+		{ClassMalware, CategoryThreat, 1.4},
+		{ClassCryptomining, CategoryThreat, 1.3},
+		{ClassKubernetesAnomaly, CategoryThreat, 1.3},
+		{ClassContainerRuntimeThreat, CategoryThreat, 1.4},
+	}
+	for _, tc := range tests {
+		t.Run(string(tc.class), func(t *testing.T) {
+			info := ClassMetadata(tc.class)
+			if info.Category != tc.wantCategory {
+				t.Errorf("ClassMetadata(%s).Category: want %s, got %s", tc.class, tc.wantCategory, info.Category)
+			}
+			if info.DefaultSeverityWeight < tc.wantMinWeight {
+				t.Errorf("ClassMetadata(%s).DefaultSeverityWeight: want >= %f, got %f",
+					tc.class, tc.wantMinWeight, info.DefaultSeverityWeight)
+			}
+			if info.Description == "" {
+				t.Errorf("ClassMetadata(%s): Description is empty", tc.class)
+			}
+			if len(info.MITRETactics) == 0 {
+				t.Errorf("ClassMetadata(%s): expected non-empty MITRETactics for threat/vuln class", tc.class)
+			}
+			if info.CSPMappings == nil {
+				t.Errorf("ClassMetadata(%s): CSPMappings is nil", tc.class)
+			}
+		})
+	}
+}
+
 // --- Backward compatibility: existing classes still resolve correctly ---
 
 func TestBackwardCompatibility_BaseClassConstants(t *testing.T) {
@@ -418,6 +470,12 @@ func TestBackwardCompatibility_NewSubClassValues(t *testing.T) {
 		ClassEncryptionWeakness:       "ENCRYPTION_WEAKNESS",
 		ClassComplianceDrift:          "COMPLIANCE_DRIFT",
 		ClassResourceAnomaly:          "RESOURCE_ANOMALY",
+		// Additional sub-classes
+		ClassWebVulnerability:       "WEB_VULNERABILITY",
+		ClassMalware:                "MALWARE",
+		ClassCryptomining:           "CRYPTOMINING",
+		ClassKubernetesAnomaly:      "KUBERNETES_ANOMALY",
+		ClassContainerRuntimeThreat: "CONTAINER_RUNTIME_THREAT",
 	}
 	for class, want := range checks {
 		if string(class) != want {

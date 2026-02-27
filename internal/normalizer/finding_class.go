@@ -250,6 +250,67 @@ func ClassMetadata(class FindingClass) ClassInfo {
 			},
 		}
 
+	// --- Additional sub-classes ---
+	case ClassWebVulnerability:
+		return ClassInfo{
+			Category:              CategoryVulnerability,
+			DefaultSeverityWeight: 1.25,
+			Description:           "Web application vulnerability: OWASP Top 10, SQLi, XSS, or SSRF",
+			MITRETactics:          []string{"TA0001", "TA0002"},
+			CSPMappings: map[string]string{
+				"gcp": "VULNERABILITY",
+				"aws": "Software and Configuration Checks/Vulnerabilities",
+			},
+		}
+	case ClassMalware:
+		return ClassInfo{
+			Category:              CategoryThreat,
+			DefaultSeverityWeight: 1.5,
+			Description:           "Malware or backdoor detected on host or in workload",
+			MITRETactics:          []string{"TA0002", "TA0003", "TA0040"},
+			CSPMappings: map[string]string{
+				"gcp":   "THREAT",
+				"aws":   "TTPs",
+				"azure": "Threat",
+			},
+		}
+	case ClassCryptomining:
+		return ClassInfo{
+			Category:              CategoryThreat,
+			DefaultSeverityWeight: 1.35,
+			Description:           "Unauthorized cryptomining activity detected on host or in cloud workload",
+			MITRETactics:          []string{"TA0040"},
+			CSPMappings: map[string]string{
+				"gcp":   "THREAT",
+				"aws":   "Unusual Behaviors",
+				"azure": "Threat",
+			},
+		}
+	case ClassKubernetesAnomaly:
+		return ClassInfo{
+			Category:              CategoryThreat,
+			DefaultSeverityWeight: 1.35,
+			Description:           "Anomalous Kubernetes API calls or unexpected runtime behavior in cluster",
+			MITRETactics:          []string{"TA0003", "TA0004", "TA0008"},
+			CSPMappings: map[string]string{
+				"gcp":   "THREAT",
+				"aws":   "Unusual Behaviors",
+				"azure": "Threat",
+			},
+		}
+	case ClassContainerRuntimeThreat:
+		return ClassInfo{
+			Category:              CategoryThreat,
+			DefaultSeverityWeight: 1.45,
+			Description:           "Container escape or active threat detected in container runtime",
+			MITRETactics:          []string{"TA0002", "TA0004", "TA0008"},
+			CSPMappings: map[string]string{
+				"gcp":   "THREAT",
+				"aws":   "TTPs",
+				"azure": "Threat",
+			},
+		}
+
 	default:
 		return ClassInfo{}
 	}
@@ -290,14 +351,28 @@ func MapAWSFindingType(awsType string) FindingClass {
 	switch {
 	case strings.Contains(lower, "ttps/privilege"):
 		return ClassPrivilegeEscalation
+	// Container runtime threats take priority over generic TTPs
+	case strings.Contains(lower, "ttps") && (strings.Contains(lower, "container") || strings.Contains(lower, "runtime")):
+		return ClassContainerRuntimeThreat
+	// Malware is a specific TTPs sub-type
+	case strings.Contains(lower, "ttps") && strings.Contains(lower, "malware"):
+		return ClassMalware
 	case strings.Contains(lower, "ttps"):
 		return ClassThreat
+	// Cryptomining and Kubernetes anomalies are sub-types of unusual behaviors
+	case strings.Contains(lower, "unusual behaviors") && strings.Contains(lower, "crypto"):
+		return ClassCryptomining
+	case strings.Contains(lower, "unusual behaviors") && (strings.Contains(lower, "kubernetes") || strings.Contains(lower, "k8s")):
+		return ClassKubernetesAnomaly
 	case strings.Contains(lower, "unusual behaviors"):
 		return ClassResourceAnomaly
 	case strings.Contains(lower, "effects"):
 		return ClassThreat
 	case strings.Contains(lower, "sensitive data"):
 		return ClassSensitiveDataRisk
+	// Web vulnerability signals within CVE findings
+	case strings.Contains(lower, "vulnerabilities/cve") && containsAny(lower, "web", "sqli", "xss", "ssrf", "injection"):
+		return ClassWebVulnerability
 	case strings.Contains(lower, "vulnerabilities/cve"):
 		return ClassVulnerability
 	case strings.Contains(lower, "software and configuration checks"):

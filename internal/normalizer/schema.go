@@ -52,6 +52,13 @@ const (
 	// --- Cloud-native sub-classes ---
 	ClassComplianceDrift FindingClass = "COMPLIANCE_DRIFT" // Config drift from baseline, CIS benchmark violations
 	ClassResourceAnomaly FindingClass = "RESOURCE_ANOMALY" // Unusual API calls, impossible travel, crypto mining signals
+
+	// --- Additional sub-classes ---
+	ClassWebVulnerability       FindingClass = "WEB_VULNERABILITY"        // Web app vulnerabilities: OWASP Top 10, SQLi, XSS, SSRF (under SOFTWARE_VULNERABILITY)
+	ClassMalware                FindingClass = "MALWARE"                  // Malware or backdoor detected on host or in workload (under THREAT)
+	ClassCryptomining           FindingClass = "CRYPTOMINING"             // Unauthorized cryptomining activity detected (under THREAT)
+	ClassKubernetesAnomaly      FindingClass = "KUBERNETES_ANOMALY"       // Anomalous Kubernetes API calls or runtime behavior (under RESOURCE_ANOMALY)
+	ClassContainerRuntimeThreat FindingClass = "CONTAINER_RUNTIME_THREAT" // Container escape or runtime threat (under THREAT)
 )
 
 // FindingClassCategory groups sub-classes into parent categories
@@ -879,8 +886,19 @@ func classifyAWSFinding(raw map[string]interface{}) FindingClass {
 		switch {
 		case strings.Contains(lower, "ttps/privilege"):
 			return ClassPrivilegeEscalation
+		// Container runtime threats take priority over generic TTPs
+		case strings.Contains(lower, "ttps") && (strings.Contains(lower, "container") || strings.Contains(lower, "runtime")):
+			return ClassContainerRuntimeThreat
+		// Malware is a specific TTPs sub-type
+		case strings.Contains(lower, "ttps") && strings.Contains(lower, "malware"):
+			return ClassMalware
 		case strings.Contains(lower, "ttps"):
 			return ClassThreat
+		// Cryptomining and Kubernetes anomalies are sub-types of unusual behaviors
+		case strings.Contains(lower, "unusual behaviors") && strings.Contains(lower, "crypto"):
+			return ClassCryptomining
+		case strings.Contains(lower, "unusual behaviors") && (strings.Contains(lower, "kubernetes") || strings.Contains(lower, "k8s")):
+			return ClassKubernetesAnomaly
 		case strings.Contains(lower, "unusual behaviors"):
 			return ClassResourceAnomaly
 		case strings.Contains(lower, "effects"):
@@ -888,7 +906,11 @@ func classifyAWSFinding(raw map[string]interface{}) FindingClass {
 		case strings.Contains(lower, "sensitive data"):
 			return ClassSensitiveDataRisk
 		case strings.Contains(lower, "vulnerabilities/cve"):
-			// Apply sub-classification using context
+			// Apply sub-classification using context; check for web vulnerability signals first
+			combined := strings.ToLower(title + " " + description)
+			if containsAny(combined, "sqli", "sql injection", "xss", "cross-site", "ssrf", "server-side request", "injection", "web application") {
+				return ClassWebVulnerability
+			}
 			return SubClassifyVulnerability(resourceType, title, description)
 		case strings.Contains(lower, "software and configuration checks"):
 			// May still be sub-classifiable (IAM, network, encryption)
