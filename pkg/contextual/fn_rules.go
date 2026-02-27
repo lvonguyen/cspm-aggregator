@@ -22,10 +22,10 @@ var mp09PrivateRanges = func() []*net.IPNet {
 	return nets
 }()
 
-// mp10PrivilegeKeywords are identifiers that indicate elevated/privileged access.
-var mp10PrivilegeKeywords = []string{
-	"admin", "root", "administrator", "poweruser", "privileged", "superuser",
-}
+// mp10PrivilegePattern matches whole-word privilege keywords with word boundaries
+// to avoid false matches like "cloudadmin" or "s3-admin-backup".
+var mp10PrivilegePattern = regexp.MustCompile(
+	`(?i)\b(admin|root|administrator|poweruser|privileged|superuser)\b`)
 
 // mp10TriggerTypes are the FindingType substrings that qualify for MP-10.
 var mp10TriggerTypes = []string{
@@ -206,13 +206,8 @@ func ruleMP10DormantPrivilegedCredential(f scoring.Finding) (*FNRuleResult, bool
 	}, true
 }
 
-// containsPrivilegeKeyword returns true when s contains any known privilege keyword.
+// containsPrivilegeKeyword returns true when s contains any known privilege keyword
+// as a whole word (word-boundary match prevents "cloudadmin", "s3-admin-backup", etc.).
 func containsPrivilegeKeyword(s string) bool {
-	lower := strings.ToLower(s)
-	for _, kw := range mp10PrivilegeKeywords {
-		if strings.Contains(lower, kw) {
-			return true
-		}
-	}
-	return false
+	return mp10PrivilegePattern.MatchString(s)
 }

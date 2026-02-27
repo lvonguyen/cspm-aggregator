@@ -11,6 +11,7 @@ import (
 // Implementations can call the live NVD API or return fixture data in tests.
 type NVDStatusChecker interface {
 	// GetCVEStatus returns the NVD status string for a CVE ID.
+	// cveID is in uppercase canonical form (e.g., "CVE-2024-12345").
 	// Common values: "ACTIVE", "ANALYZED", "REJECTED", "DISPUTED", "MODIFIED".
 	GetCVEStatus(cveID string) (string, error)
 }
@@ -260,18 +261,12 @@ func buildRuleMP07CVEStatusValidator(nvd NVDStatusChecker) fpRule {
 // EC codes: EC-25
 // ---------------------------------------------------------------------------
 
-// mp08AsymmetricPatterns matches whole-word asymmetric key spec keywords.
-// "ecc" uses word boundary to avoid matching "excessive", "success", etc.
-var mp08AsymmetricPatterns = []string{`(?i)\basymmetric\b`, `(?i)\brsa\b`, `(?i)\becc\b`, `(?i)\bsm2\b`}
+// mp08AsymmetricPattern matches whole-word asymmetric key spec keywords.
+// Pre-compiled to avoid per-call compilation overhead of regexp.MatchString.
+var mp08AsymmetricPattern = regexp.MustCompile(`(?i)\b(asymmetric|rsa|ecc|sm2)\b`)
 
 func containsAsymmetricKeyword(s string) bool {
-	for _, pattern := range mp08AsymmetricPatterns {
-		matched, _ := regexp.MatchString(pattern, s)
-		if matched {
-			return true
-		}
-	}
-	return false
+	return mp08AsymmetricPattern.MatchString(s)
 }
 
 func ruleMP08KMSAsymmetricRotation(f scoring.Finding) (*FPRuleResult, bool) {

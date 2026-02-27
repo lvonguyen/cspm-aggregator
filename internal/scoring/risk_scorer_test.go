@@ -1138,3 +1138,34 @@ func TestCheckDeterministicRules_FPPriorityOverFN(t *testing.T) {
 		t.Errorf("expected model_used=rule_based, got %s", assessment.ModelUsed)
 	}
 }
+
+// TestCheckDeterministicRules_FPSuppressedPCIFinding_GuardrailElevates verifies
+// that when an FP rule suppresses a CRITICAL+PCI finding to INFORMATIONAL, the
+// applyGuardrails step restores severity to at least MEDIUM (the PCI/PII floor).
+func TestCheckDeterministicRules_FPSuppressedPCIFinding_GuardrailElevates(t *testing.T) {
+	fpResult := &DeterministicRuleResult{
+		OriginalSeverity:   "CRITICAL",
+		AdjustedSeverity:   "INFORMATIONAL",
+		Applied:            true,
+		Confidence:         0.95,
+		Reason:             "CVE REJECTED per MP-07",
+		Pattern:            "MP-07",
+		SuggestedRiskScore: 5,
+	}
+	fpEval := &mockFPEvaluator{result: fpResult, matched: true}
+
+	config := newDefaultConfig() // MinimumSeverityForPCIPII = "MEDIUM"
+	rs := NewRiskScorer(nil, nil, nil, config).WithRuleEngines(fpEval, nil)
+
+	finding := newTestFinding("CRITICAL")
+	finding.Context.DataClassification = "PCI"
+
+	assessment := rs.checkDeterministicRules(finding)
+	if assessment == nil {
+		t.Fatal("expected assessment from FP rule, got nil")
+	}
+	// Guardrail Rule 2 should elevate INFORMATIONAL back to MEDIUM for PCI data.
+	if severityToInt(assessment.AdjustedSeverity) > severityToInt("MEDIUM") {
+		t.Errorf("guardrail should enforce minimum MEDIUM for PCI; got %s", assessment.AdjustedSeverity)
+	}
+}

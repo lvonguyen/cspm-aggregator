@@ -326,6 +326,9 @@ func (rs *RiskScorer) checkAutoAccept(finding *Finding) *RiskAssessment {
 // checkDeterministicRules runs the FP and FN rule engines in priority order.
 // FP suppression is checked first; if a rule matches, the finding is returned
 // immediately without escalation checks. FN escalation is checked second.
+// A rule may match without changing severity (Applied==false) when the finding
+// severity is already at the target level; this still short-circuits the LLM
+// to prevent the model from re-escalating a correctly-assessed finding.
 // Returns nil when no rule matches (caller should proceed to LLM scoring).
 func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment {
 	// FP rules have priority — suppress before escalating.
@@ -347,7 +350,7 @@ func (rs *RiskScorer) checkDeterministicRules(finding *Finding) *RiskAssessment 
 				RiskScore:          riskScore,
 				Confidence:         result.Confidence,
 				Rationale:          result.Reason,
-				MitigatingFactors:  []string{result.Reason},
+				MitigatingFactors:  []string{result.Pattern},
 				RecommendedAction:  "accept_risk",
 				AutoAcceptEligible: true,
 				AutoAcceptReason:   result.Pattern,
