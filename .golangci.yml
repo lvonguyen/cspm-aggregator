@@ -1,0 +1,109 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - bodyclose
+    - errcheck
+    - exhaustive
+    - goconst
+    - gocritic
+    - gofmt
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - revive
+    - staticcheck
+    - typecheck
+    - unconvert
+    - unused
+
+linters-settings:
+  errcheck:
+    check-type-assertions: false
+    check-blank: false
+    exclude-functions:
+      - (io.Closer).Close
+      - (net/http.ResponseWriter).Write
+      - (*encoding/json.Encoder).Encode
+      - (*database/sql.Tx).Rollback
+      - (*go.uber.org/zap.Logger).Sync
+
+  goconst:
+    min-len: 5
+    min-occurrences: 7
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+    disabled-checks:
+      - appendAssign
+      - ifElseChain
+      - elseif
+      - sprintfQuotedString
+      - builtinShadowDecl
+      - exitAfterDefer
+
+  gosec:
+    excludes:
+      - G101
+      - G104
+      - G204
+      - G304
+
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+      - shadow
+
+  nakedret:
+    max-func-lines: 30
+
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - goconst
+
+    - path: \.pb\.go
+      linters:
+        - all
+
+    - path: cmd/
+      linters:
+        - funlen
+
+  max-issues-per-linter: 50
+  max-same-issues: 10
