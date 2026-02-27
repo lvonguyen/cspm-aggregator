@@ -227,6 +227,17 @@ GET /api/v1/reports/quick-wins
 
 ---
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [HLD](docs/HLD_CSPM_Aggregator.md) | High-Level Design — system architecture, data flows, and component interactions |
+| [DDD](docs/DDD_CSPM_Aggregator.md) | Detailed Design — implementation specifications, schema definitions, and API contracts |
+| [Schema Reference](docs/SCHEMA_REFERENCE.md) | Common finding schema and field definitions |
+| [Standards](docs/STANDARDS.md) | Coding and integration standards |
+
+---
+
 ## Roadmap
 
 - [x] Multi-cloud finding aggregation
