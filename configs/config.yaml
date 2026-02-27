@@ -37,7 +37,7 @@ filters:
 
 # AI/LLM Scoring Configuration
 ai:
-  model_name: "claude-opus-4-5-20250514"
+  model_name: "claude-opus-4-6"
   temperature: 0.1
   max_tokens: 1024
   api_key_env: "ANTHROPIC_API_KEY" # Environment variable containing API key
@@ -73,7 +73,7 @@ schedule:
 
 # AI Scoring Configuration
 ai:
-  model_name: "claude-opus-4-5-20250514"
+  model_name: "claude-opus-4-6"
   temperature: 0.1
   max_tokens: 1024
   api_key_env: "ANTHROPIC_API_KEY" # Environment variable containing API key

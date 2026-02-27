@@ -165,7 +165,7 @@ func (c *Config) applyEnvOverrides() {
 func (c *Config) applyDefaults() {
 	// AI defaults
 	if c.AI.ModelName == "" {
-		c.AI.ModelName = "claude-opus-4-5-20250514"
+		c.AI.ModelName = "claude-opus-4-6"
 	}
 	if c.AI.Temperature == 0 {
 		c.AI.Temperature = 0.1

@@ -43,7 +43,7 @@ CSPM Aggregator is a **multi-cloud security posture management platform** that a
 **Target Users**: Security Operations, Cloud Engineering, Compliance Teams
 **Deployment**: Kubernetes CronJob on Azure AKS
 **Data Store**: Azure Blob Storage (state persistence)
-**AI**: Anthropic Claude API (claude-opus-4-5-20250514)
+**AI**: Anthropic Claude API (claude-opus-4-6)
 
 ---
 
@@ -198,8 +198,8 @@ egress:
 
 | Provider | Model | Temperature | Max Tokens | Use Case |
 |----------|-------|-------------|------------|----------|
-| Anthropic | claude-opus-4-5-20250514 | 0.1 | 1024 | Risk scoring |
-| Anthropic | claude-opus-4-5-20250514 | 0.1 | 512 | Complexity fallback |
+| Anthropic | claude-opus-4-6 | 0.1 | 1024 | Risk scoring |
+| Anthropic | claude-opus-4-6 | 0.1 | 512 | Complexity fallback |
 
 ---
 

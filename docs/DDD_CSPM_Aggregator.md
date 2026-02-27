@@ -69,7 +69,7 @@
 | AWS Bedrock | Managed, multiple models | AWS lock-in, complexity |
 | Self-hosted (Llama) | No API costs, privacy | Ops overhead, quality gap |
 
-**Decision**: **Anthropic Claude (claude-opus-4-5-20250514)**
+**Decision**: **Anthropic Claude (claude-opus-4-6)**
 
 **Rationale**:
 - Best-in-class reasoning for complex security context

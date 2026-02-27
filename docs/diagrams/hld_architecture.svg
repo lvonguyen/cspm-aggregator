@@ -201,7 +201,7 @@
   <use xlink:href="#icon-claude" x="655" y="310" width="28" height="28"/>
   <text x="690" y="327" class="component-title">Claude API</text>
   <text x="655" y="360" class="tech-label">Anthropic</text>
-  <text x="655" y="375" class="tech-label">claude-opus-4-5</text>
+  <text x="655" y="375" class="tech-label">claude-opus-4-6</text>
   <rect x="655" y="390" width="110" height="18" rx="3" style="fill:#f3e8ff;stroke:#c4b5fd"/>
   <text x="710" y="402" text-anchor="middle" class="tech-label" style="fill:#7c3aed">temp=0.1</text>
   <rect x="655" y="415" width="110" height="18" rx="3" style="fill:#f3e8ff;stroke:#c4b5fd"/>
