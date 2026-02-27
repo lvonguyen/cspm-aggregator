@@ -1162,7 +1162,7 @@
       "NERC-CIP",
       "IEC-62443"
     ],
-    "scenario": "GCP SCC premium tier (Event Threat Detection) not enabled on haea-derms-renewable-prod. GCP Secure Command Center score shows 82/100 due to high marks on IAM, encryption, and logging controls. ETD absence masked by aggregate score.",
+    "scenario": "GCP SCC premium tier (Event Threat Detection) not enabled on energyco-derms-renewable-prod. GCP Secure Command Center score shows 82/100 due to high marks on IAM, encryption, and logging controls. ETD absence masked by aggregate score.",
     "why_misclassified": "EC-50: Score inflation from strong preventive controls masking absent threat detection. GCP SCC aggregate score aggregates unrelated controls; IAM and encryption strength offsets missing behavioral threat detection.",
     "detection_signal": "GCP SCC ETD not enabled \u2014 LOW (SCC score 82/100)",
     "ground_truth": "DERMS project has no behavioral anomaly detection (no crypto mining detection, no data exfiltration alerts, no IAM abuse detection). IEC 62443 monitoring requirement for industrial control systems unmet. SCC score masks missing detective control.",

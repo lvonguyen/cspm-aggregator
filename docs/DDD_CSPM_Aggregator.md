@@ -384,7 +384,7 @@ GET /api/v1/findings
   &queue=auto_remediation
   &sla_status=overdue
   &csp=aws,azure
-  &cbu=HMA,GMA
+  &cbu=BRAND1,BRAND2
   &limit=100
   &cursor=xxx
 

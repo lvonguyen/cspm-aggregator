@@ -366,7 +366,7 @@ GET /api/v1/findings
   &queue=auto_remediation      # Filter by assigned queue
   &sla_status=overdue          # Filter by SLA status
   &csp=aws,azure              # Filter by cloud provider
-  &cbu=HMA,GMA                # Filter by business unit
+  &cbu=BRAND1,BRAND2                # Filter by business unit
 
 Response:
 {

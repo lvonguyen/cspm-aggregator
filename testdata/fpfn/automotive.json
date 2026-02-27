@@ -15,7 +15,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "A security group permits TCP 8883 (MQTT/TLS) inbound from 0.0.0.0/0 on the connected vehicle telemetry ingestion fleet. The scanner flags it as a broadly open port. However, the MQTT broker requires mTLS client certificates issued by Hyundai's internal vehicle PKI, and unauthenticated connections are rejected at the TLS handshake layer before any data is processed.",
+    "scenario": "A security group permits TCP 8883 (MQTT/TLS) inbound from 0.0.0.0/0 on the connected vehicle telemetry ingestion fleet. The scanner flags it as a broadly open port. However, the MQTT broker requires mTLS client certificates issued by the manufacturer's internal vehicle PKI, and unauthenticated connections are rejected at the TLS handshake layer before any data is processed.",
     "why_misclassified": "Scanner evaluates network-layer reachability only; it cannot inspect TLS mutual authentication requirements at the application layer. EC-08: traffic is VPC-bounded from the scanner's perspective but the legitimate internet-facing MQTT port appears as 'open'.",
     "detection_signal": "SecurityGroup sg-0a1b2c3d allows inbound TCP 8883 from 0.0.0.0/0 \u2014 HIGH: unrestricted inbound on non-standard port",
     "ground_truth": "Port 8883 requires valid vehicle-issued mTLS client certs. No unauthenticated session can establish. This is intentional V2C architecture per UNECE WP.29 Annex 5 requirements.",
@@ -62,11 +62,11 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "IAM role arn:aws:iam::HAEA-KIA-PROD:role/shared-telematics-reader has a trust policy permitting assume-role from the HYUNDAI-HAEA-PROD account. CSPM flags this as unauthorized cross-account access. In reality, this is the documented HAEA shared services architecture where Hyundai and Kia telematics data pipelines share a common ingestion layer under a formal intra-org data sharing agreement.",
+    "scenario": "IAM role arn:aws:iam::ACMECORP-PROD:role/shared-telematics-reader has a trust policy permitting assume-role from the ACMECORP-MAIN-PROD account. CSPM flags this as unauthorized cross-account access. In reality, this is the documented AcmeCorp shared services architecture where automotive and Brand2 telematics data pipelines share a common ingestion layer under a formal intra-org data sharing agreement.",
     "why_misclassified": "EC-27: intra-org trust is treated as external account access. Scanner does not resolve AWS Organizations membership to differentiate partner-org accounts from truly external principals.",
     "detection_signal": "IAM role allows cross-account access from account 123456789012 \u2014 HIGH: potential privilege escalation from external account",
-    "ground_truth": "Both accounts are members of the HAEA AWS Organization. The trust relationship is documented in the HAEA Cross-Brand Data Governance policy and reviewed quarterly under TISAX AL2 requirements.",
-    "remediation_impact": "Removing the trust policy breaks the Hyundai-Kia shared telematics ingestion pipeline, which processes ~2M vehicle events/hour and feeds fleet management dashboards.",
+    "ground_truth": "Both accounts are members of the Acme Corp AWS Organization. The trust relationship is documented in the Acme Corp Cross-Brand Data Governance policy and reviewed quarterly under TISAX AL2 requirements.",
+    "remediation_impact": "Removing the trust policy breaks the automotive-shared telematics ingestion pipeline, which processes ~2M vehicle events/hour and feeds fleet management dashboards.",
     "confidence": 0.89
   },
   {
@@ -198,10 +198,10 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "CSPM reports CloudTrail is not enabled in the HAEA-KIA-Sandbox account. The account is used for vehicle simulation testing only. However, the HAEA AWS Organization has an organization-level CloudTrail configured in the management account that covers all member accounts including sandbox accounts, with S3 logs centralized in the security account.",
+    "scenario": "CSPM reports CloudTrail is not enabled in the ACMECORP-SANDBOX account. The account is used for vehicle simulation testing only. However, the Acme Corp AWS Organization has an organization-level CloudTrail configured in the management account that covers all member accounts including sandbox accounts, with S3 logs centralized in the security account.",
     "why_misclassified": "EC-19: org-level logging compensating control. The scanner checks for a CloudTrail trail within the account boundary but does not detect organization-level trails applied from the management account.",
-    "detection_signal": "Account HAEA-KIA-Sandbox has no CloudTrail trail enabled \u2014 HIGH: ISO 21434 audit logging requirement not met",
-    "ground_truth": "Organization CloudTrail arn:aws:cloudtrail:us-east-1:MGMT-ACCOUNT:trail/haea-org-trail covers all accounts in the AWS Organization including sandbox accounts. All API calls are logged to centralized S3.",
+    "detection_signal": "Account ACMECORP-SANDBOX has no CloudTrail trail enabled \u2014 HIGH: ISO 21434 audit logging requirement not met",
+    "ground_truth": "Organization CloudTrail arn:aws:cloudtrail:us-east-1:MGMT-ACCOUNT:trail/acmecorp-org-trail covers all accounts in the AWS Organization including sandbox accounts. All API calls are logged to centralized S3.",
     "remediation_impact": "Creating a redundant account-level trail would double logging costs (~$800/month per active account) and create duplicate events in the SIEM, increasing alert noise.",
     "confidence": 0.92
   },
@@ -423,9 +423,9 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "CSPM detects root account activity in the HAEA-Automotive-Prod AWS account and reports CRITICAL IAM finding. The root account was used once to configure AWS GovCloud account linking, which is a task that legitimately requires root credentials. The access was by the designated TISAX break-glass root account holder using hardware MFA, logged, and reviewed by the CISO team.",
+    "scenario": "CSPM detects root account activity in the ACMECORP-AUTO-PROD AWS account and reports CRITICAL IAM finding. The root account was used once to configure AWS GovCloud account linking, which is a task that legitimately requires root credentials. The access was by the designated TISAX break-glass root account holder using hardware MFA, logged, and reviewed by the CISO team.",
     "why_misclassified": "EC-28: break-glass role usage. The scanner cannot distinguish between unauthorized root access and documented break-glass procedures. All root account usage generates identical alerts regardless of authorization context.",
-    "detection_signal": "Root account login detected in HAEA-Automotive-Prod \u2014 CRITICAL: unauthorized privileged access in ISO 21434 production environment",
+    "detection_signal": "Root account login detected in ACMECORP-AUTO-PROD \u2014 CRITICAL: unauthorized privileged access in ISO 21434 production environment",
     "ground_truth": "Root access was authorized for AWS GovCloud account linking per AWS documentation requirements. Access was by the TISAX-designated break-glass custodian with hardware MFA. Session was recorded and reviewed within 2 hours per TISAX IR-1 procedures.",
     "remediation_impact": "No remediation required. The break-glass access was documented and closed within the required window. Alert should be acknowledged and correlated with the change record.",
     "confidence": 0.91
@@ -445,10 +445,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Elastic IP eipalloc-0abc123 is flagged as unattached and presenting a MEDIUM exposure risk due to reserved but unassociated public IP. This EIP is reserved for the HAEA DR failover NAT Gateway and is intentionally unattached during normal operations. The EIP is only associated when the primary region fails and the DR runbook activates the failover NAT Gateway.",
+    "scenario": "Elastic IP eipalloc-0abc123 is flagged as unattached and presenting a MEDIUM exposure risk due to reserved but unassociated public IP. This EIP is reserved for the AcmeCorp DR failover NAT Gateway and is intentionally unattached during normal operations. The EIP is only associated when the primary region fails and the DR runbook activates the failover NAT Gateway.",
     "why_misclassified": "EC-07: orphaned IP lifecycle context. The scanner sees an unattached EIP as a misconfiguration. It cannot determine whether the EIP is an intentional reserved DR resource or a genuinely orphaned asset.",
     "detection_signal": "Elastic IP eipalloc-0abc123 is unattached \u2014 MEDIUM: unused public IP increases attack surface in automotive production account",
-    "ground_truth": "EIP is reserved for the us-west-2 DR NAT Gateway per the HAEA DR runbook. Attaching it during normal operations would expose the DR NAT Gateway unnecessarily. The EIP has a Name tag 'dr-natgw-failover-reserved'.",
+    "ground_truth": "EIP is reserved for the us-west-2 DR NAT Gateway per the AcmeCorp DR runbook. Attaching it during normal operations would expose the DR NAT Gateway unnecessarily. The EIP has a Name tag 'dr-natgw-failover-reserved'.",
     "remediation_impact": "Releasing this EIP would break the DR failover runbook. During an actual DR event, EIP reacquisition may not return the same IP, causing DNS propagation delays of 5-30 minutes during a failover.",
     "confidence": 0.85
   },
@@ -467,10 +467,10 @@
     "compliance_frameworks": [
       "TISAX"
     ],
-    "scenario": "Azure Defender for Containers is disabled on subscription HAEA-Automotive-Blue-v2. CSPM reports HIGH: monitoring gap in automotive production. This subscription is the blue environment in a blue-green deployment; it is currently inactive (green is serving traffic). The subscription maintains the previous application version and is in standby mode pending canary promotion validation, not receiving production traffic.",
+    "scenario": "Azure Defender for Containers is disabled on subscription ACMECORP-AUTO-BLUE-v2. CSPM reports HIGH: monitoring gap in automotive production. This subscription is the blue environment in a blue-green deployment; it is currently inactive (green is serving traffic). The subscription maintains the previous application version and is in standby mode pending canary promotion validation, not receiving production traffic.",
     "why_misclassified": "EC-12: blue-green inactive environment. The scanner cannot distinguish between an active production subscription and a standby blue-green deployment slot.",
-    "detection_signal": "Defender for Containers disabled on HAEA-Automotive-Blue-v2 \u2014 HIGH: TISAX-scope containers unmonitored in production subscription",
-    "ground_truth": "HAEA-Automotive-Blue-v2 is the inactive blue deployment. No production traffic is routed to it. Defender is enabled on HAEA-Automotive-Green-v2 (active). Blue will receive Defender coverage when it becomes active in the next deployment rotation.",
+    "detection_signal": "Defender for Containers disabled on ACMECORP-AUTO-BLUE-v2 \u2014 HIGH: TISAX-scope containers unmonitored in production subscription",
+    "ground_truth": "ACMECORP-AUTO-BLUE-v2 is the inactive blue deployment. No production traffic is routed to it. Defender is enabled on ACMECORP-AUTO-GREEN-v2 (active). Blue will receive Defender coverage when it becomes active in the next deployment rotation.",
     "remediation_impact": "Enabling Defender on the inactive blue subscription adds $400/month in monitoring costs for an environment that receives no traffic. More importantly, it complicates the deployment automation that manages Defender state transitions.",
     "confidence": 0.86
   },
@@ -602,7 +602,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "S3 bucket containing production connected vehicle telemetry has a tag suppress-cspm=true. CSPM suppresses all findings for this bucket. The bucket has a genuine misconfiguration: public read access was inadvertently enabled during a Terraform refactor. The suppression tag was applied broadly across the HAEA bucket fleet to reduce noise during a migration project and was never removed from production buckets.",
+    "scenario": "S3 bucket containing production connected vehicle telemetry has a tag suppress-cspm=true. CSPM suppresses all findings for this bucket. The bucket has a genuine misconfiguration: public read access was inadvertently enabled during a Terraform refactor. The suppression tag was applied broadly across the AcmeCorp bucket fleet to reduce noise during a migration project and was never removed from production buckets.",
     "why_misclassified": "EC-49: tag-based suppression masking a real production issue. This is a false negative \u2014 not a false positive. The suppression tag hides a legitimate HIGH finding. The tag was applied to dev/staging buckets but inadvertently also applied to production.",
     "detection_signal": "[SUPPRESSED] S3 bucket vehicle-telemetry-prod public access enabled \u2014 suppressed via tag suppress-cspm=true",
     "ground_truth": "This IS a real finding. The bucket has public read access enabled, exposing aggregated vehicle telemetry. The CSPM suppression is incorrect \u2014 this is a production bucket with sensitive data that should not be suppressed.",
@@ -624,11 +624,11 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GKE cluster kia-telemetry-us-central1 is running Kubernetes 1.27, which is past its upstream EOL. CSPM reports MEDIUM for running a sunset Kubernetes version. GKE Extended Support is active on this cluster, providing continued security patches from Google through 2025-Q3. The cluster is scheduled for upgrade in the next quarterly maintenance window already approved by the HAEA change board.",
+    "scenario": "GKE cluster brand2-telemetry-us-central1 is running Kubernetes 1.27, which is past its upstream EOL. CSPM reports MEDIUM for running a sunset Kubernetes version. GKE Extended Support is active on this cluster, providing continued security patches from Google through 2025-Q3. The cluster is scheduled for upgrade in the next quarterly maintenance window already approved by the AcmeCorp change board.",
     "why_misclassified": "EC-11: sunset lifecycle with active vendor extended support. The scanner evaluates against upstream Kubernetes EOL dates without checking GKE Extended Support status or upgrade schedules already planned.",
     "detection_signal": "GKE cluster running Kubernetes 1.27 (EOL) \u2014 MEDIUM: automotive telemetry cluster on unsupported version",
     "ground_truth": "Google Extended Support for GKE 1.27 is active and provides security patches. Cluster upgrade to 1.29 is scheduled for Q3 2025 maintenance window (CR-2025-0412). No unpatched CVEs exist under GKE Extended Support.",
-    "remediation_impact": "Forced immediate upgrade outside the approved change window violates the HAEA change management process and risks breaking deployed workloads without proper testing.",
+    "remediation_impact": "Forced immediate upgrade outside the approved change window violates the AcmeCorp change management process and risks breaking deployed workloads without proper testing.",
     "confidence": 0.86
   },
   {
@@ -714,7 +714,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "IAM user vehicle-pipeline-svc has MFA disabled. CSPM reports HIGH for TISAX-scope IAM user without MFA. This is a service account used only for programmatic access by the vehicle data pipeline. The account has no console access, only API keys. The account has hardware MFA configured at the API key issuance process \u2014 an SCP in the HAEA OU requires STS session tokens, effectively requiring the pipeline to use assume-role with MFA token injection at the automation layer.",
+    "scenario": "IAM user vehicle-pipeline-svc has MFA disabled. CSPM reports HIGH for TISAX-scope IAM user without MFA. This is a service account used only for programmatic access by the vehicle data pipeline. The account has no console access, only API keys. The account has hardware MFA configured at the API key issuance process \u2014 an SCP in the AcmeCorp OU requires STS session tokens, effectively requiring the pipeline to use assume-role with MFA token injection at the automation layer.",
     "why_misclassified": "EC-14: hardware MFA compensating control at automation layer. The scanner checks the IAM user's MFA device configuration directly but doesn't evaluate the SCP-enforced assume-role chain that injects MFA context.",
     "detection_signal": "IAM user vehicle-pipeline-svc has no MFA device \u2014 HIGH: TISAX-scope service account lacks MFA",
     "ground_truth": "Service account uses API key + SCP-enforced assume-role with TOTP MFA injected by the automation framework. Effective MFA requirement is enforced. Console access is blocked by policy. Direct-key API calls are denied by the SCP.",
@@ -802,7 +802,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP service account telemetry-bq-loader@kia-data.iam.gserviceaccount.com has roles/bigquery.dataEditor bound at the project level, flagged as overprivileged. This is a headless service account used exclusively by a Dataflow pipeline that writes processed vehicle telemetry to BigQuery. No human user can assume this SA; it is only usable by the Dataflow job service identity with Workload Identity Federation.",
+    "scenario": "GCP service account telemetry-bq-loader@brand2-data.iam.gserviceaccount.com has roles/bigquery.dataEditor bound at the project level, flagged as overprivileged. This is a headless service account used exclusively by a Dataflow pipeline that writes processed vehicle telemetry to BigQuery. No human user can assume this SA; it is only usable by the Dataflow job service identity with Workload Identity Federation.",
     "why_misclassified": "EC-26: headless SA with no human-assumable scope. The scanner flags the broad BigQuery role without checking whether the SA has any human principal bindings or whether it is restricted to Workload Identity Federation only.",
     "detection_signal": "Service account telemetry-bq-loader has project-level BigQuery Editor \u2014 HIGH: automotive telemetry service account overprivileged",
     "ground_truth": "SA is bound exclusively to the Dataflow service identity via WIF. No IAM member can impersonate this SA via key or impersonation \u2014 only the Dataflow job's workload identity can use it. The BigQuery Editor role is required for the Dataflow write operations.",
@@ -846,9 +846,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "S3 bucket haea-ota-dist-prod has a public ACL. CSPM reports HIGH data exposure. This bucket distributes firmware OTA packages to vehicles globally. A VPC endpoint policy for S3 in the internal development VPC has an explicit Deny condition preventing internal hosts from bypassing signed URL requirements. All external access requires pre-signed URLs generated by the OTA signing service with 15-minute expiry.",
+    "scenario": "S3 bucket acmecorp-ota-dist-prod has a public ACL. CSPM reports HIGH data exposure. This bucket distributes firmware OTA packages to vehicles globally. A VPC endpoint policy for S3 in the internal development VPC has an explicit Deny condition preventing internal hosts from bypassing signed URL requirements. All external access requires pre-signed URLs generated by the OTA signing service with 15-minute expiry.",
     "why_misclassified": "EC-18: VPC endpoint deny policy as compensating control. The scanner sees the public bucket configuration but does not evaluate the VPC endpoint policy that adds access control for internal paths, nor the pre-signed URL requirement for external access.",
-    "detection_signal": "S3 bucket haea-ota-dist-prod has public access enabled \u2014 HIGH: automotive OTA distribution contains publicly accessible firmware",
+    "detection_signal": "S3 bucket acmecorp-ota-dist-prod has public access enabled \u2014 HIGH: automotive OTA distribution contains publicly accessible firmware",
     "ground_truth": "Firmware packages are intentionally distributable to vehicles with pre-signed URLs (15-min TTL). Firmware binaries are signed with RSA-4096. Even if downloaded without authorization, unsigned firmware is rejected by the vehicle's secure boot chain.",
     "remediation_impact": "Making the bucket private would break the OTA distribution architecture. All vehicle-destined firmware requires internet-reachable signed URLs. Secure boot in vehicles provides the actual security guarantee.",
     "confidence": 0.91
@@ -956,9 +956,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Cloud Run service kia-diagnostics-api uses a vendored fork of the go-jose JWT library. The scanner flags CVE-2023-48795 (Terrapin attack on SSH, CVSS 5.9) on the vendored copy. The vendored go-jose fork was patched 8 months ago by the HAEA platform team to fix an unrelated JWT clock skew issue, and that patch incidentally included the Terrapin fix from upstream.",
+    "scenario": "Cloud Run service brand2-diagnostics-api uses a vendored fork of the go-jose JWT library. The scanner flags CVE-2023-48795 (Terrapin attack on SSH, CVSS 5.9) on the vendored copy. The vendored go-jose fork was patched 8 months ago by the AcmeCorp platform team to fix an unrelated JWT clock skew issue, and that patch incidentally included the Terrapin fix from upstream.",
     "why_misclassified": "EC-42: vendored patched fork. The scanner matches the CVE against the declared version string (v2.6.0) without detecting that the vendored copy includes post-v2.6.0 patches applied directly to the vendor directory.",
-    "detection_signal": "Cloud Run kia-diagnostics-api vendored go-jose v2.6.0 CVE-2023-48795 \u2014 HIGH: vehicle diagnostics API vulnerable to SSH Terrapin attack",
+    "detection_signal": "Cloud Run brand2-diagnostics-api vendored go-jose v2.6.0 CVE-2023-48795 \u2014 HIGH: vehicle diagnostics API vulnerable to SSH Terrapin attack",
     "ground_truth": "The vendored go-jose fork includes the CVE-2023-48795 fix from upstream v2.6.1 applied as a patch. The vulnerable line of code is absent from the vendor directory. Version string is outdated but the patch is present.",
     "remediation_impact": "Upgrading the vendor reference to a newer version string is correct hygiene but not security-urgent \u2014 the fix is already applied. The upgrade should happen in the next sprint.",
     "confidence": 0.88
@@ -1023,7 +1023,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "CSPM flags HIGH for a security group allowing inbound from 10.0.0.0/8 on the Hyundai connected car platform. Security review reveals this security group was replaced 45 days ago during a network segmentation project. The resource still appears in CSPM scan results because the CSPM tool's inventory is cached and has not re-synced after the deletion. The security group no longer exists in the AWS account.",
+    "scenario": "CSPM flags HIGH for a security group allowing inbound from 10.0.0.0/8 on the automotive connected car platform. Security review reveals this security group was replaced 45 days ago during a network segmentation project. The resource still appears in CSPM scan results because the CSPM tool's inventory is cached and has not re-synced after the deletion. The security group no longer exists in the AWS account.",
     "why_misclassified": "EC-24: stale scan finding for deleted resource. The CSPM tool's asset inventory has a stale cache entry for a deleted security group. The resource was deleted 45 days ago but the finding persists in the CSPM console.",
     "detection_signal": "SecurityGroup sg-0stale123 allows inbound from 10.0.0.0/8 \u2014 HIGH: automotive connected platform broad internal access",
     "ground_truth": "Security group sg-0stale123 was deleted on 2025-01-15 during network segmentation project (CR-2025-0123). The resource does not exist. CSPM tool has a stale inventory cache entry.",
@@ -1067,9 +1067,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Cloud Run service hyundai-diagnostics-api has --allow-unauthenticated flag, flagged HIGH for public access on automotive infrastructure. The project has an org policy constraint/run.allowedIngressSettings=internal-and-cloud-load-balancing applied, which overrides the service-level unauthenticated setting and restricts access to internal VPC and Cloud Load Balancing origins only. The org policy was applied after the service was initially deployed.",
+    "scenario": "Cloud Run service automotive-diagnostics-api has --allow-unauthenticated flag, flagged HIGH for public access on automotive infrastructure. The project has an org policy constraint/run.allowedIngressSettings=internal-and-cloud-load-balancing applied, which overrides the service-level unauthenticated setting and restricts access to internal VPC and Cloud Load Balancing origins only. The org policy was applied after the service was initially deployed.",
     "why_misclassified": "EC-40: GCP Cloud Run org policy override. The scanner evaluates the Cloud Run service's IAM configuration (allow-unauthenticated) without checking the Organization Policy constraint that restricts actual ingress regardless of the IAM binding.",
-    "detection_signal": "Cloud Run service hyundai-diagnostics-api allows unauthenticated \u2014 HIGH: automotive diagnostics API publicly accessible",
+    "detection_signal": "Cloud Run service automotive-diagnostics-api allows unauthenticated \u2014 HIGH: automotive diagnostics API publicly accessible",
     "ground_truth": "Org policy constraints/run.allowedIngressSettings=internal-and-cloud-load-balancing prevents direct public access. The allow-unauthenticated binding is effectively overridden. Only Load Balancer traffic can reach the service.",
     "remediation_impact": "Removing the allow-unauthenticated flag is correct configuration hygiene but not urgently required given the org policy override. Should be cleaned up in the next Terraform apply.",
     "confidence": 0.9
@@ -1134,7 +1134,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "S3 bucket haea-vehicle-telemetry-prod-archive has public access enabled but is completely suppressed in the CSPM tool via a tag suppress-findings=all applied during a pre-TISAX audit cleanup project 8 months ago. The bucket contains 6 months of raw vehicle telemetry including GPS traces, driver behavior scores, and VINs. The suppression tag was applied in error to a production bucket instead of the test bucket.",
+    "scenario": "S3 bucket acmecorp-vehicle-telemetry-prod-archive has public access enabled but is completely suppressed in the CSPM tool via a tag suppress-findings=all applied during a pre-TISAX audit cleanup project 8 months ago. The bucket contains 6 months of raw vehicle telemetry including GPS traces, driver behavior scores, and VINs. The suppression tag was applied in error to a production bucket instead of the test bucket.",
     "why_misclassified": "EC-49: tag-based suppression masking a genuine CRITICAL production issue. The CSPM suppression tag was misapplied to a production bucket containing PII. No finding is generated so the real exposure is invisible.",
     "detection_signal": "[SUPPRESSED \u2014 NO FINDING GENERATED] Bucket tagged suppress-findings=all",
     "ground_truth": "Real CRITICAL finding. Bucket has public access enabled, contains vehicle GPS traces + VINs + driver behavior scores (GDPR/CCPA PII). Exposed for 8 months due to erroneous suppression tag.",
@@ -1156,9 +1156,9 @@
     "compliance_frameworks": [
       "TISAX"
     ],
-    "scenario": "Azure Defender reports LOW severity for a vulnerability on the HAEA vehicle platform VM. The CVE (CVE-2024-21338, CVSS 7.8) affects Windows kernel CLFS driver \u2014 a privilege escalation to SYSTEM that was actively exploited in the wild (CISA KEV listed). Microsoft's Defender severity scale rates this LOW based on their proprietary contextual factors, but the CVE's real-world exploitation and CISA KEV status make it HIGH in the aggregator's risk model.",
+    "scenario": "Azure Defender reports LOW severity for a vulnerability on the AcmeCorp vehicle platform VM. The CVE (CVE-2024-21338, CVSS 7.8) affects Windows kernel CLFS driver \u2014 a privilege escalation to SYSTEM that was actively exploited in the wild (CISA KEV listed). Microsoft's Defender severity scale rates this LOW based on their proprietary contextual factors, but the CVE's real-world exploitation and CISA KEV status make it HIGH in the aggregator's risk model.",
     "why_misclassified": "EC-47: CSP severity scale non-equivalence in reverse direction. Microsoft Defender downgraded the severity based on internal threat intelligence, but CISA KEV status and active exploitation evidence should override the low CSP rating.",
-    "detection_signal": "Azure Defender: LOW severity CVE-2024-21338 on vm-haea-platform-001 \u2014 aggregator inherits LOW from cloud provider",
+    "detection_signal": "Azure Defender: LOW severity CVE-2024-21338 on vm-acmecorp-platform-001 \u2014 aggregator inherits LOW from cloud provider",
     "ground_truth": "CVE-2024-21338 is on CISA KEV list with confirmed in-the-wild exploitation. CVSS 7.8 privilege escalation to SYSTEM. Should be rated HIGH or CRITICAL by the aggregator regardless of Defender's contextual downgrade.",
     "remediation_impact": "Under-prioritized patching due to LOW severity label. This CVE was exploited by North Korean threat actors (Lazarus Group) for lateral movement in automotive supply chain targets in 2024.",
     "confidence": 0.94
@@ -1178,10 +1178,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Security group for the vehicle telematics ingestion endpoint allows SSH (port 22) from 10.0.0.0/8 (all private RFC1918). CSPM rates this LOW because the source is private IP ranges, not internet. However, the HAEA corporate VPN assigns addresses in 10.0.0.0/8 to all 12,000 employees globally. A single compromised employee device could pivot to SSH into the telematics ingestion EC2 fleet.",
+    "scenario": "Security group for the vehicle telematics ingestion endpoint allows SSH (port 22) from 10.0.0.0/8 (all private RFC1918). CSPM rates this LOW because the source is private IP ranges, not internet. However, the AcmeCorp corporate VPN assigns addresses in 10.0.0.0/8 to all 12,000 employees globally. A single compromised employee device could pivot to SSH into the telematics ingestion EC2 fleet.",
     "why_misclassified": "EC-09: dev/internal inflation suppressed too aggressively. The scanner treats all RFC1918 source CIDRs as equivalent. A /8 covering all corporate VPN users is functionally much riskier than a specific jump-host /32.",
     "detection_signal": "SecurityGroup allows SSH from 10.0.0.0/8 \u2014 LOW: private IP range SSH access on telematics ingestion",
-    "ground_truth": "10.0.0.0/8 encompasses all 12,000 HAEA VPN users globally. A single compromised employee endpoint enables SSH to the vehicle telematics fleet. The CIDR breadth makes this a HIGH risk despite being RFC1918.",
+    "ground_truth": "10.0.0.0/8 encompasses all 12,000 AcmeCorp VPN users globally. A single compromised employee endpoint enables SSH to the vehicle telematics fleet. The CIDR breadth makes this a HIGH risk despite being RFC1918.",
     "remediation_impact": "SSH access should be restricted to the bastion host /32 only. Broad VPN SSH access to the telematics ingestion fleet violates least access and creates a significant lateral movement path.",
     "confidence": 0.92
   },
@@ -1201,10 +1201,10 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "IAM role connected-vehicle-lambda has an inline policy with Action: '*' on Resource: 'arn:aws:s3:::haea-vehicle-*'. CSPM rates this MEDIUM as 'wildcard action on specific prefix'. However, the S3 prefix haea-vehicle-* encompasses 47 production buckets including firmware signing keys, vehicle command authorization databases, and connected car PII stores. The wildcard action enables DeleteBucket, PutBucketPolicy, and ACL manipulation.",
+    "scenario": "IAM role connected-vehicle-lambda has an inline policy with Action: '*' on Resource: 'arn:aws:s3:::acmecorp-vehicle-*'. CSPM rates this MEDIUM as 'wildcard action on specific prefix'. However, the S3 prefix acmecorp-vehicle-* encompasses 47 production buckets including firmware signing keys, vehicle command authorization databases, and connected car PII stores. The wildcard action enables DeleteBucket, PutBucketPolicy, and ACL manipulation.",
     "why_misclassified": "EC-50: CSP enhanced severity controls suppressing what should be a toxic combination. Wildcard S3 action on a prefix covering critical automotive infrastructure should be CRITICAL, not MEDIUM. Resource specificity is oversold as a compensating control.",
-    "detection_signal": "IAM role connected-vehicle-lambda Action:* on s3:::haea-vehicle-* \u2014 MEDIUM: scoped wildcard IAM policy",
-    "ground_truth": "47 production buckets match haea-vehicle-* including firmware signing, vehicle command authorization, and PII stores. Wildcard S3 action enables data destruction, bucket policy manipulation, and ACL-based exposure. This is CRITICAL.",
+    "detection_signal": "IAM role connected-vehicle-lambda Action:* on s3:::acmecorp-vehicle-* \u2014 MEDIUM: scoped wildcard IAM policy",
+    "ground_truth": "47 production buckets match acmecorp-vehicle-* including firmware signing, vehicle command authorization, and PII stores. Wildcard S3 action enables data destruction, bucket policy manipulation, and ACL-based exposure. This is CRITICAL.",
     "remediation_impact": "Immediate policy tightening required. Role should only have specific S3 actions (GetObject, PutObject) on the specific buckets it legitimately accesses.",
     "confidence": 0.95
   },
@@ -1224,7 +1224,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "HAEA has a multi-region CloudTrail configured in us-east-1 as the home region. The trail is set to multi-region=true, which appears to cover all regions. However, data events (S3 GetObject, Lambda Invoke) are only enabled for us-east-1. HAEA vehicle telematics workloads run in eu-west-1 (Korea-EU data residency requirement). Lambda invocations and S3 access in eu-west-1 generate no CloudTrail data events, creating an audit blindspot for TISAX.",
+    "scenario": "Acme Corp has a multi-region CloudTrail configured in us-east-1 as the home region. The trail is set to multi-region=true, which appears to cover all regions. However, data events (S3 GetObject, Lambda Invoke) are only enabled for us-east-1. AcmeCorp vehicle telematics workloads run in eu-west-1 (Korea-EU data residency requirement). Lambda invocations and S3 access in eu-west-1 generate no CloudTrail data events, creating an audit blindspot for TISAX.",
     "why_misclassified": "EC-38: cross-region scope limitation creating a genuine audit gap. The CSPM tool verifies CloudTrail is enabled and multi-region, rating it compliant. It does not verify that data event coverage extends to all workload regions.",
     "detection_signal": "[NO FINDING \u2014 CloudTrail shows multi-region=true]",
     "ground_truth": "Data event logging gap in eu-west-1. All S3 data access and Lambda invocations in eu-west-1 (Korean vehicle data EU residency region) are unlogged. TISAX requires complete activity logging. This is a genuine HIGH compliance gap.",
@@ -1246,9 +1246,9 @@
     "compliance_frameworks": [
       "TISAX"
     ],
-    "scenario": "Managed identity for the vehicle data processing VM has Contributor role on the HAEA resource group (MEDIUM finding in CSPM). A separate check also validates that Azure Policy assignments restrict what actions Contributor can take. CSPM sees the Contributor role + Policy assignment and downgrades to LOW. However, the Policy only restricts resource creation \u2014 it does not restrict the ability to exfiltrate existing data, modify Key Vault access policies, or modify existing resources.",
+    "scenario": "Managed identity for the vehicle data processing VM has Contributor role on the AcmeCorp resource group (MEDIUM finding in CSPM). A separate check also validates that Azure Policy assignments restrict what actions Contributor can take. CSPM sees the Contributor role + Policy assignment and downgrades to LOW. However, the Policy only restricts resource creation \u2014 it does not restrict the ability to exfiltrate existing data, modify Key Vault access policies, or modify existing resources.",
     "why_misclassified": "EC-15 in reverse: permission boundary only partially compensates. The CSPM treats any policy assignment as sufficient compensation, but the policy scope is limited to resource creation types and does not cover data access or secret exfiltration.",
-    "detection_signal": "VM managed identity has Contributor on HAEA resource group \u2014 LOW: Azure Policy compensating control in place",
+    "detection_signal": "VM managed identity has Contributor on AcmeCorp resource group \u2014 LOW: Azure Policy compensating control in place",
     "ground_truth": "Contributor + Key Vault Secrets User allows the VM identity to read all Key Vault secrets in the resource group. Azure Policy does not block data reads. This is HIGH: vehicle platform VM can read all secrets including vehicle command signing keys.",
     "remediation_impact": "Managed identity should be scoped to specific resource groups and specific roles. Contributor on the entire resource group violates least-privilege.",
     "confidence": 0.91
@@ -1269,10 +1269,10 @@
       "ISO-21434",
       "UNECE-WP29"
     ],
-    "scenario": "Lambda function vehicle-command-dispatcher has its OTA signing private key stored as a Lambda environment variable SIGNING_KEY_B64, base64-encoded. CSPM scans Lambda configurations but only checks for patterns matching common secret formats (AWS keys, connection strings). The base64-encoded RSA private key does not match any CSPM secret detection pattern. The key, if extracted, would allow signing arbitrary firmware packages accepted by all HAEA vehicles.",
+    "scenario": "Lambda function vehicle-command-dispatcher has its OTA signing private key stored as a Lambda environment variable SIGNING_KEY_B64, base64-encoded. CSPM scans Lambda configurations but only checks for patterns matching common secret formats (AWS keys, connection strings). The base64-encoded RSA private key does not match any CSPM secret detection pattern. The key, if extracted, would allow signing arbitrary firmware packages accepted by all AcmeCorp vehicles.",
     "why_misclassified": "EC-22: encoding hides what is actually a secret. The CSPM pattern matching for secrets does not detect base64-encoded private keys in environment variables unless they match known prefixes.",
     "detection_signal": "[NO FINDING \u2014 environment variable SIGNING_KEY_B64 not matched by secret detection patterns]",
-    "ground_truth": "CRITICAL: RSA private key for vehicle firmware signing stored in Lambda environment variable as base64. Any Lambda execution role compromise exposes the signing key. Attacker with this key can sign malicious firmware accepted by all HAEA vehicles.",
+    "ground_truth": "CRITICAL: RSA private key for vehicle firmware signing stored in Lambda environment variable as base64. Any Lambda execution role compromise exposes the signing key. Attacker with this key can sign malicious firmware accepted by all AcmeCorp vehicles.",
     "remediation_impact": "Emergency: rotate signing key, move to AWS Secrets Manager with KMS CMK, audit all Lambda configurations for embedded keys. UNECE WP.29 requires secure key storage for OTA signing.",
     "confidence": 0.96
   },
@@ -1291,11 +1291,11 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "S3 bucket policy for haea-vehicle-pii-prod allows cross-account GetObject from account 987654321098. CSPM rates this LOW because both accounts share the HAEA AWS Organization. Security investigation reveals account 987654321098 is a recently onboarded third-party supplier (Tier-2 supplier for seat electronics) that was incorrectly invited into the HAEA AWS Organization. The account belongs to an external company, not HAEA's internal fleet.",
+    "scenario": "S3 bucket policy for acmecorp-vehicle-pii-prod allows cross-account GetObject from account 987654321098. CSPM rates this LOW because both accounts share the Acme Corp AWS Organization. Security investigation reveals account 987654321098 is a recently onboarded third-party supplier (Tier-2 supplier for seat electronics) that was incorrectly invited into the Acme Corp AWS Organization. The account belongs to an external company, not AcmeCorp's internal fleet.",
     "why_misclassified": "EC-27 reversed: intra-org trust assumption is wrong. CSPM correctly identifies same-organization accounts as trusted, but the organization has an incorrectly enrolled third-party account.",
-    "detection_signal": "S3 cross-account access from HAEA-org account 987654321098 \u2014 LOW: intra-org trust",
-    "ground_truth": "Account 987654321098 belongs to a Tier-2 automotive supplier incorrectly enrolled in the HAEA AWS Organization. This grants the supplier access to vehicle PII S3 data. Real HIGH finding.",
-    "remediation_impact": "Remove the supplier account from the HAEA organization, revoke S3 bucket policy grant, audit what data was accessed. Initiate data breach assessment per GDPR Article 33.",
+    "detection_signal": "S3 cross-account access from AcmeCorp-org account 987654321098 \u2014 LOW: intra-org trust",
+    "ground_truth": "Account 987654321098 belongs to a Tier-2 automotive supplier incorrectly enrolled in the Acme Corp AWS Organization. This grants the supplier access to vehicle PII S3 data. Real HIGH finding.",
+    "remediation_impact": "Remove the supplier account from the AcmeCorp organization, revoke S3 bucket policy grant, audit what data was accessed. Initiate data breach assessment per GDPR Article 33.",
     "confidence": 0.95
   },
   {
@@ -1336,7 +1336,7 @@
       "ISO-21434",
       "UNECE-WP29"
     ],
-    "scenario": "The HAEA vehicle command API uses AWS WAF as the primary access control layer. CSPM validates the WAF is attached and active. Security team discovers that the EC2 security group allows direct access on port 8080 from 0.0.0.0/0, providing a WAF bypass path to the backend vehicle command API without passing through WAF rule evaluation.",
+    "scenario": "The AcmeCorp vehicle command API uses AWS WAF as the primary access control layer. CSPM validates the WAF is attached and active. Security team discovers that the EC2 security group allows direct access on port 8080 from 0.0.0.0/0, providing a WAF bypass path to the backend vehicle command API without passing through WAF rule evaluation.",
     "why_misclassified": "EC-05 reversed: WAF-shielded only in the intended path. The scanner validates WAF is attached to the CloudFront distribution but misses the direct EC2 security group exposure that bypasses the WAF entirely.",
     "detection_signal": "[NO WAF BYPASS FINDING \u2014 WAF attachment verified on CloudFront distribution]",
     "ground_truth": "HIGH: Port 8080 on vehicle command API EC2 instances is directly accessible, bypassing AWS WAF and all geo-blocking/rate-limiting controls. UNECE WP.29 vehicle command security controls are circumventable.",
@@ -1359,10 +1359,10 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Organization-level CloudTrail is enabled across all HAEA accounts. However, the S3 bucket receiving CloudTrail logs has a bucket policy that allows cloudtrail.amazonaws.com to write logs but also has a wildcard GetObject policy for all principals with assume-role. Investigation reveals the CloudTrail log bucket is inadvertently readable by all HAEA IAM roles, exposing the audit trail to any compromised role.",
+    "scenario": "Organization-level CloudTrail is enabled across all AcmeCorp accounts. However, the S3 bucket receiving CloudTrail logs has a bucket policy that allows cloudtrail.amazonaws.com to write logs but also has a wildcard GetObject policy for all principals with assume-role. Investigation reveals the CloudTrail log bucket is inadvertently readable by all AcmeCorp IAM roles, exposing the audit trail to any compromised role.",
     "why_misclassified": "Logging exists but is improperly secured. The CSPM checks for log presence, not log confidentiality.",
     "detection_signal": "[NO FINDING \u2014 CloudTrail org trail active, logs being written to S3]",
-    "ground_truth": "HIGH: CloudTrail audit logs are readable by any HAEA IAM role. An attacker with any valid IAM credential can read audit logs revealing infrastructure topology, IAM usage patterns, and investigation activities.",
+    "ground_truth": "HIGH: CloudTrail audit logs are readable by any AcmeCorp IAM role. An attacker with any valid IAM credential can read audit logs revealing infrastructure topology, IAM usage patterns, and investigation activities.",
     "remediation_impact": "Restrict CloudTrail S3 bucket to security team role only. Log confidentiality is critical for TISAX incident investigation procedures.",
     "confidence": 0.92
   },
@@ -1427,7 +1427,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Root account login is detected in the HAEA-OTA-Prod account. CSPM has a suppression rule for root access when tagged with break-glass-authorized=true. The login was tagged with this marker by an automated playbook triggered when someone found the break-glass credentials checklist in an internal wiki. The actual break-glass custodian did not authorize the access \u2014 the credentials were used by an unauthorized actor.",
+    "scenario": "Root account login is detected in the ACMECORP-OTA-PROD account. CSPM has a suppression rule for root access when tagged with break-glass-authorized=true. The login was tagged with this marker by an automated playbook triggered when someone found the break-glass credentials checklist in an internal wiki. The actual break-glass custodian did not authorize the access \u2014 the credentials were used by an unauthorized actor.",
     "why_misclassified": "EC-28 reversed: the break-glass suppression rule can be triggered by automation, masking genuinely unauthorized root access. The CSPM suppression assumes the tag implies authorization, but the tag was applied by an automated rule, not a human custodian review.",
     "detection_signal": "[SUPPRESSED \u2014 root access tagged break-glass-authorized=true by automation]",
     "ground_truth": "CRITICAL: Unauthorized root account access in OTA production account. Root credentials were used by an unauthorized actor. The automated suppression rule masked the incident. OTA signing infrastructure may be compromised.",
@@ -1472,10 +1472,10 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "RDS instance kia-owner-pii-prod has publicly_accessible=false, which would make the EC-37 scanner check pass. However, the VPC was recently peered with an external partner network (a KIA dealer portal AWS account) with a route table entry pointing to the dealer VPC CIDR that covers the RDS subnet. The scanner sees publicly_accessible=false and reports compliant, but the effective network path now allows access from the dealer portal's VPC.",
+    "scenario": "RDS instance brand2-owner-pii-prod has publicly_accessible=false, which would make the EC-37 scanner check pass. However, the VPC was recently peered with an external partner network (a Brand2 dealer portal AWS account) with a route table entry pointing to the dealer VPC CIDR that covers the RDS subnet. The scanner sees publicly_accessible=false and reports compliant, but the effective network path now allows access from the dealer portal's VPC.",
     "why_misclassified": "EC-37 extended: publicly_accessible=false but network topology creates reachability via VPC peering. The scanner checks the RDS attribute but does not trace VPC peering route tables to determine effective reachability.",
     "detection_signal": "[NO FINDING \u2014 RDS publicly_accessible=false]",
-    "ground_truth": "HIGH: VPC peering with dealer portal creates network path to the RDS instance containing KIA owner PII. Owner PII database is reachable from the external partner network.",
+    "ground_truth": "HIGH: VPC peering with dealer portal creates network path to the RDS instance containing Brand2 owner PII. Owner PII database is reachable from the external partner network.",
     "remediation_impact": "Add RDS security group rule explicitly blocking dealer portal CIDR. Review all VPC peering routes to ensure PII databases are not reachable from partner networks.",
     "confidence": 0.93
   },
@@ -1516,7 +1516,7 @@
     "compliance_frameworks": [
       "TISAX"
     ],
-    "scenario": "Azure NSG for the HAEA vehicle command backend has port 1883 (MQTT without TLS) open from the internal VNet range. The scanner applies EC-08 VPC-bounded logic and rates this LOW/suppressed because the source is the internal VNet. However, the MQTT broker on port 1883 accepts cleartext MQTT without authentication \u2014 any resource in the VNet can publish vehicle commands.",
+    "scenario": "Azure NSG for the AcmeCorp vehicle command backend has port 1883 (MQTT without TLS) open from the internal VNet range. The scanner applies EC-08 VPC-bounded logic and rates this LOW/suppressed because the source is the internal VNet. However, the MQTT broker on port 1883 accepts cleartext MQTT without authentication \u2014 any resource in the VNet can publish vehicle commands.",
     "why_misclassified": "EC-08 over-applied: VPC-bounded traffic is treated as low risk. Internal cleartext MQTT with no authentication is dangerous even from internal sources, especially given the vehicle command context.",
     "detection_signal": "[SUPPRESSED \u2014 NSG port 1883 from internal VNet only, EC-08 pattern]",
     "ground_truth": "HIGH: MQTT port 1883 (cleartext, no auth) accessible from entire VNet. Any compromised VM or container in the VNet can publish vehicle commands.",
@@ -1538,11 +1538,11 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GuardDuty is disabled in the HAEA-Vehicle-Blue account. CSPM applies EC-12 blue-green logic and suppresses this as the inactive deployment slot. However, the blue deployment became the active production slot 3 weeks ago during a deployment, and environment role tags were not updated after the swap.",
+    "scenario": "GuardDuty is disabled in the ACMECORP-VEHICLE-BLUE account. CSPM applies EC-12 blue-green logic and suppresses this as the inactive deployment slot. However, the blue deployment became the active production slot 3 weeks ago during a deployment, and environment role tags were not updated after the swap.",
     "why_misclassified": "EC-12 reversed: environment role labels are stale after blue-green swap. The scanner trusts environment tags over actual traffic routing state.",
     "detection_signal": "[SUPPRESSED \u2014 account tagged environment=blue-inactive]",
     "ground_truth": "HIGH: GuardDuty is disabled in the currently active production account. The account receives all production vehicle platform traffic but has no threat detection coverage.",
-    "remediation_impact": "Enable GuardDuty immediately in HAEA-Vehicle-Blue (now active). Update environment tags to reflect current deployment state. Implement tag validation in the deployment pipeline.",
+    "remediation_impact": "Enable GuardDuty immediately in ACMECORP-VEHICLE-BLUE (now active). Update environment tags to reflect current deployment state. Implement tag validation in the deployment pipeline.",
     "confidence": 0.94
   },
   {
@@ -1649,10 +1649,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP service account kia-telemetry-sa is classified as a headless SA (EC-26) because it has no human principal bindings \u2014 only Workload Identity Federation bindings. However, a service account key file was generated 18 months ago for an emergency incident response and was committed to an internal Git repository. The key is still valid. EC-26 headless classification ignores the existence of out-of-band service account keys.",
+    "scenario": "GCP service account brand2-telemetry-sa is classified as a headless SA (EC-26) because it has no human principal bindings \u2014 only Workload Identity Federation bindings. However, a service account key file was generated 18 months ago for an emergency incident response and was committed to an internal Git repository. The key is still valid. EC-26 headless classification ignores the existence of out-of-band service account keys.",
     "why_misclassified": "EC-26: headless SA classification based only on IAM bindings, not on service account key existence. A SA with no human IAM bindings can still be compromised via leaked service account keys.",
     "detection_signal": "[NO FINDING \u2014 service account classified headless, no human IAM bindings]",
-    "ground_truth": "CRITICAL: Valid service account key for kia-telemetry-sa committed to internal Git repo 18 months ago. Key enables full SA access including BigQuery data access on vehicle telemetry datasets.",
+    "ground_truth": "CRITICAL: Valid service account key for brand2-telemetry-sa committed to internal Git repo 18 months ago. Key enables full SA access including BigQuery data access on vehicle telemetry datasets.",
     "remediation_impact": "Immediately delete all service account keys, rotate access, audit Git history for key commits, review all data accessed with the key.",
     "confidence": 0.95
   },
@@ -1672,7 +1672,7 @@
       "ISO-21434",
       "UNECE-WP29"
     ],
-    "scenario": "API Gateway for the vehicle remote command API (lock/unlock, remote start, geofencing) has resource policies and API keys enabled. CSPM rates the exposure MEDIUM because API keys are required. However, the API key is a static shared key distributed to all Hyundai mobile app versions since 2022 \u2014 embedded in 15M+ mobile app binaries and trivially extractable via app reverse engineering. The EC-52 automotive sub-system multiplier should apply but is not triggered because the gateway is not tagged as vehicle-command.",
+    "scenario": "API Gateway for the vehicle remote command API (lock/unlock, remote start, geofencing) has resource policies and API keys enabled. CSPM rates the exposure MEDIUM because API keys are required. However, the API key is a static shared key distributed to all automotive mobile app versions since 2022 \u2014 embedded in 15M+ mobile app binaries and trivially extractable via app reverse engineering. The EC-52 automotive sub-system multiplier should apply but is not triggered because the gateway is not tagged as vehicle-command.",
     "why_misclassified": "EC-52 not triggered due to missing tag on the API Gateway. Static API key in millions of mobile app binaries provides minimal protection and should escalate severity.",
     "detection_signal": "API Gateway vehicle-remote-cmd requires API key \u2014 MEDIUM: basic access control present",
     "ground_truth": "CRITICAL: Static API key embedded in 15M+ mobile app binaries is trivially extractable. Any actor with a device and a decompiler can obtain the key and send arbitrary remote vehicle commands.",
@@ -1695,9 +1695,9 @@
       "TISAX",
       "ISO-21434"
     ],
-    "scenario": "Azure Application Gateway for the HAEA connected car portal shows TLS certificate management as a finding. The CSPM reports the gateway is handling TLS termination directly rather than using a centralized TLS management service. However, the App Gateway uses Azure-managed TLS certificates with automatic renewal, and all backend traffic uses TLS re-encryption to the application servers \u2014 meeting the actual TISAX requirement for encrypted transit.",
+    "scenario": "Azure Application Gateway for the AcmeCorp connected car portal shows TLS certificate management as a finding. The CSPM reports the gateway is handling TLS termination directly rather than using a centralized TLS management service. However, the App Gateway uses Azure-managed TLS certificates with automatic renewal, and all backend traffic uses TLS re-encryption to the application servers \u2014 meeting the actual TISAX requirement for encrypted transit.",
     "why_misclassified": "EC-41: Azure managed TLS termination at Application Gateway layer is a valid TISAX-compliant architecture. The recommendation for centralized TLS management is advisory, not a requirement violation when Azure manages cert renewal and backend re-encryption is configured.",
-    "detection_signal": "App Gateway haea-connected-car-agw handles TLS termination \u2014 HIGH: TISAX recommends centralized TLS management service",
+    "detection_signal": "App Gateway acmecorp-connected-car-agw handles TLS termination \u2014 HIGH: TISAX recommends centralized TLS management service",
     "ground_truth": "App Gateway uses Azure-managed certs with automatic renewal and backend HTTPS re-encryption. This meets TISAX transit encryption requirements. Centralized service recommendation is advisory only.",
     "remediation_impact": "Migrating to Azure Front Door for TLS management is a major infrastructure change with multi-week migration timeline. Not required for TISAX compliance given the existing TLS configuration.",
     "confidence": 0.86
@@ -1717,11 +1717,11 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP firewall rule for the KIA connected services VPC allows HTTPS (443) from 0.0.0.0/0 on the load balancer frontend. CSPM flags this HIGH. The VPC is in a VPC Service Perimeter (Access Context Manager) that restricts GCP API access to KIA corporate identity context. The perimeter does not affect the load balancer's internet-facing frontend (which is intended), but all internal GCP service calls are perimeter-protected.",
+    "scenario": "GCP firewall rule for the Brand2 connected services VPC allows HTTPS (443) from 0.0.0.0/0 on the load balancer frontend. CSPM flags this HIGH. The VPC is in a VPC Service Perimeter (Access Context Manager) that restricts GCP API access to Brand2 corporate identity context. The perimeter does not affect the load balancer's internet-facing frontend (which is intended), but all internal GCP service calls are perimeter-protected.",
     "why_misclassified": "EC-08: VPC Service Perimeter provides control plane protection. The scanner evaluates the network firewall rule for the load balancer without understanding that the actual data plane services behind it are protected by the VPC Service Perimeter.",
-    "detection_signal": "Firewall allows HTTPS from 0.0.0.0/0 on kia-connected-services VPC \u2014 HIGH: automotive internet exposure",
+    "detection_signal": "Firewall allows HTTPS from 0.0.0.0/0 on brand2-connected-services VPC \u2014 HIGH: automotive internet exposure",
     "ground_truth": "Load balancer HTTPS exposure is intentional for the consumer-facing connected services portal. VPC Service Perimeter protects all backend GCP APIs from external access.",
-    "remediation_impact": "Restricting the LB frontend CIDR would block millions of KIA connected car users. The VPC Service Perimeter is the appropriate control for the backend GCP service plane.",
+    "remediation_impact": "Restricting the LB frontend CIDR would block millions of Brand2 connected car users. The VPC Service Perimeter is the appropriate control for the backend GCP service plane.",
     "confidence": 0.88
   },
   {
@@ -1761,10 +1761,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "App Service configuration for the vehicle simulation environment contains an API key in an environment variable API_KEY=test-key-not-for-prod. CSPM flags HIGH: credential in application configuration. The value 'test-key-not-for-prod' is a literal test placeholder that is not a valid credential for any HAEA system \u2014 it is a development hint reminding engineers to replace it before production deployment.",
+    "scenario": "App Service configuration for the vehicle simulation environment contains an API key in an environment variable API_KEY=test-key-not-for-prod. CSPM flags HIGH: credential in application configuration. The value 'test-key-not-for-prod' is a literal test placeholder that is not a valid credential for any AcmeCorp system \u2014 it is a development hint reminding engineers to replace it before production deployment.",
     "why_misclassified": "EC-09: development environment credential pattern. The scanner detects 'key' in the env variable name and any alphanumeric value, triggering a credential detection alert regardless of whether the value is a real credential.",
     "detection_signal": "App Service config contains API_KEY env variable \u2014 HIGH: credential exposed in automotive application configuration",
-    "ground_truth": "Value 'test-key-not-for-prod' is a literal placeholder comment-as-value, not a real credential. No HAEA system accepts this as a valid API key.",
+    "ground_truth": "Value 'test-key-not-for-prod' is a literal placeholder comment-as-value, not a real credential. No AcmeCorp system accepts this as a valid API key.",
     "remediation_impact": "No security remediation needed. Consider removing the placeholder env var or using a clearly non-secret naming convention.",
     "confidence": 0.87
   },
@@ -1828,11 +1828,11 @@
     "compliance_frameworks": [
       "TISAX"
     ],
-    "scenario": "Azure AD application HAEA-Dealer-Portal has cross-tenant access enabled, allowing sign-in from the Hyundai Korea Azure AD tenant. CSPM flags HIGH: cross-tenant access in TISAX-scoped application. This is the documented architecture for the dealer management portal \u2014 HAEA (US) and Hyundai Motor Company (Korea) share the portal using cross-tenant B2B federation under a formal data sharing agreement reviewed in the TISAX assessment.",
+    "scenario": "Azure AD application ACMECORP-DEALER-PORTAL has cross-tenant access enabled, allowing sign-in from the automotive group Korea Azure AD tenant. CSPM flags HIGH: cross-tenant access in TISAX-scoped application. This is the documented architecture for the dealer management portal \u2014 AcmeCorp (US) and Automotive Motor Company (Korea) share the portal using cross-tenant B2B federation under a formal data sharing agreement reviewed in the TISAX assessment.",
     "why_misclassified": "EC-27: intra-group cross-tenant access treated as external federation risk. The scanner cannot distinguish between authorized partner tenant federation and external unknown tenant access.",
     "detection_signal": "Azure AD app allows cross-tenant from tenant abc123 \u2014 HIGH: TISAX-scope application allows external Azure tenant",
-    "ground_truth": "Cross-tenant federation to Hyundai Motor Company (Korea) tenant is documented in the TISAX assessment and the HAEA-HMC B2B data sharing agreement. This is an authorized corporate federation relationship.",
-    "remediation_impact": "Removing cross-tenant access would break dealer portal access for all Korea-based Hyundai business users.",
+    "ground_truth": "Cross-tenant federation to Automotive Motor Company (Korea) tenant is documented in the TISAX assessment and the ACMECORP-AMC B2B data sharing agreement. This is an authorized corporate federation relationship.",
+    "remediation_impact": "Removing cross-tenant access would break dealer portal access for all Korea-based automotive business users.",
     "confidence": 0.89
   },
   {
@@ -1850,10 +1850,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Security group allows HTTPS inbound from 0.0.0.0/0 on the KIA vehicle telematics API ELB. CSPM reports HIGH. The ELB is backed by AWS WAF with a custom rule set including rate limiting per VIN (to prevent telematics data replay), geographic restrictions to US/Korea/EU markets, and a custom rule rejecting requests without a valid vehicle session token format.",
+    "scenario": "Security group allows HTTPS inbound from 0.0.0.0/0 on the Brand2 vehicle telematics API ELB. CSPM reports HIGH. The ELB is backed by AWS WAF with a custom rule set including rate limiting per VIN (to prevent telematics data replay), geographic restrictions to US/Korea/EU markets, and a custom rule rejecting requests without a valid vehicle session token format.",
     "why_misclassified": "EC-05: WAF-shielded endpoint where the SG/ELB exposure is intentional. The scanner evaluates SG rules without cross-referencing WAF WebACL associations.",
     "detection_signal": "ELB security group allows TCP 443 from 0.0.0.0/0 \u2014 HIGH: vehicle telematics API internet-exposed",
-    "ground_truth": "KIA telematics API requires global vehicle access from mobile networks. WAF provides rate limiting, geo-blocking, and format validation. 0.0.0.0/0 SG is architecturally required for ALB+WAF pattern.",
+    "ground_truth": "Brand2 telematics API requires global vehicle access from mobile networks. WAF provides rate limiting, geo-blocking, and format validation. 0.0.0.0/0 SG is architecturally required for ALB+WAF pattern.",
     "remediation_impact": "Cannot restrict ALB SG when WAF is the access control layer \u2014 WAF routes via AWS infrastructure IPs.",
     "confidence": 0.91
   },
@@ -1895,10 +1895,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Service account vehicle-load-test@kia-dev.iam.gserviceaccount.com has roles/compute.admin bound to the kia-dev project. CSPM reports HIGH for an admin-level service account. This is a dedicated load testing SA used by the ADAS simulation team to spin up and tear down large fleets of Compute Engine VMs for V2X simulation load tests. The kia-dev project is an isolated development project with no connectivity to production systems.",
+    "scenario": "Service account vehicle-load-test@brand2-dev.iam.gserviceaccount.com has roles/compute.admin bound to the brand2-dev project. CSPM reports HIGH for an admin-level service account. This is a dedicated load testing SA used by the ADAS simulation team to spin up and tear down large fleets of Compute Engine VMs for V2X simulation load tests. The brand2-dev project is an isolated development project with no connectivity to production systems.",
     "why_misclassified": "EC-09: development environment \u2014 admin access in an isolated dev project for automation purposes is not the same risk as admin access in production. Scanner applies uniform severity without environment context.",
-    "detection_signal": "Service account has compute.admin in kia-dev project \u2014 HIGH: automotive compute admin service account",
-    "ground_truth": "kia-dev is a fully isolated simulation-only project. Compute admin is required for automated VM fleet management during load tests. No production data or connectivity exists in this project.",
+    "detection_signal": "Service account has compute.admin in brand2-dev project \u2014 HIGH: automotive compute admin service account",
+    "ground_truth": "brand2-dev is a fully isolated simulation-only project. Compute admin is required for automated VM fleet management during load tests. No production data or connectivity exists in this project.",
     "remediation_impact": "Restricting compute.admin in the dev project would break the automated ADAS simulation framework. Project isolation provides the appropriate compensating control.",
     "confidence": 0.86
   },
@@ -1918,7 +1918,7 @@
       "TISAX",
       "ISO-27001"
     ],
-    "scenario": "SQL auditing disabled on haea-korea-supplier-db storing Korean supplier contracts and PIPA-regulated personal data of supplier employees. Covered by 'operational-db-legacy' exception from migration phase that was not time-bounded.",
+    "scenario": "SQL auditing disabled on acmecorp-korea-supplier-db storing Korean supplier contracts and PIPA-regulated personal data of supplier employees. Covered by 'operational-db-legacy' exception from migration phase that was not time-bounded.",
     "why_misclassified": "EC-49: Unbounded legacy exception without expiry enforcement. PIPA requirement for audit trails not evaluated at exception creation time.",
     "detection_signal": "SQL auditing=disabled on Korea supplier DB \u2014 LOW (operational-db-legacy exception)",
     "ground_truth": "PIPA (Korea) requires audit trails for databases processing personal information. Supplier employee PII (names, contact info in contract metadata) in unaudited DB. Korea DPA violation risk.",
@@ -1940,7 +1940,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP project haea-ota-signing-prod has Owner role assigned to service account ota-pipeline-sa@haea-ota-signing-prod.iam.gserviceaccount.com. Assigned during initial project setup for convenience. CSPM exception 'bootstrap-sa-exception' applied during setup never removed after migration to least-privilege.",
+    "scenario": "GCP project acmecorp-ota-signing-prod has Owner role assigned to service account ota-pipeline-sa@acmecorp-ota-signing-prod.iam.gserviceaccount.com. Assigned during initial project setup for convenience. CSPM exception 'bootstrap-sa-exception' applied during setup never removed after migration to least-privilege.",
     "why_misclassified": "EC-49: Bootstrap exception not removed post-setup. SA Owner assignment from project creation phase persists in production.",
     "detection_signal": "Owner role on project for SA \u2014 INFORMATIONAL (bootstrap-sa-exception)",
     "ground_truth": "OTA pipeline service account has Owner role on the OTA signing project. Any compromise of this SA gives full control over code signing infrastructure. CRITICAL: can push malicious firmware signed with legitimate keys to all vehicles.",
@@ -1963,7 +1963,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "KMS key haea-vehicle-pii-encryption-key (annual rotation disabled) used to encrypt all vehicle-owner PII stored in DynamoDB and S3. Tagged 'static-key-approved' exception from a 2022 architecture decision that has since been reversed in HAEA security policy v3.1 (2024).",
+    "scenario": "KMS key acmecorp-vehicle-pii-encryption-key (annual rotation disabled) used to encrypt all vehicle-owner PII stored in DynamoDB and S3. Tagged 'static-key-approved' exception from a 2022 architecture decision that has since been reversed in AcmeCorp security policy v3.1 (2024).",
     "why_misclassified": "EC-49: Exception references superseded policy decision. CSPM exception database not synchronized with policy updates.",
     "detection_signal": "KMS key rotation disabled on PII encryption key \u2014 LOW (static-key-approved exception, policy superseded 2024)",
     "ground_truth": "PII encryption key not rotated since 2022 (4 years). TISAX ISA CR-5.3 requires annual key rotation. Long-lived key increases exposure window if key material is compromised. GDPR Article 32 technical measure gap.",
@@ -2008,9 +2008,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "SNS topic haea-vehicle-recall-notification carries vehicle recall notifications including VIN lists and safety defect descriptions. No SSE-KMS encryption. Tagged 'operational-notification-exempt' covering all notification topics without distinguishing safety-critical content.",
+    "scenario": "SNS topic acmecorp-vehicle-recall-notification carries vehicle recall notifications including VIN lists and safety defect descriptions. No SSE-KMS encryption. Tagged 'operational-notification-exempt' covering all notification topics without distinguishing safety-critical content.",
     "why_misclassified": "EC-49: Blanket notification-exempt tag applied to all SNS topics. Safety recall data incorrectly treated same as operational alerts.",
-    "detection_signal": "SNS topic not encrypted on haea-vehicle-recall-notification \u2014 INFORMATIONAL (operational-notification-exempt exception)",
+    "detection_signal": "SNS topic not encrypted on acmecorp-vehicle-recall-notification \u2014 INFORMATIONAL (operational-notification-exempt exception)",
     "ground_truth": "VIN lists associated with safety defects (unencrypted) could reveal recall scope before NHTSA public announcement. ISO 21434 asset classification: safety-sensitive pre-disclosure data. Regulatory timing risk.",
     "remediation_impact": "Enable SSE-KMS on recall notification topic. Scope notification exception to exclude safety-critical topics. Estimated: 1 hour.",
     "confidence": 0.9
@@ -2030,11 +2030,11 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP Compute instance haea-legacy-connected-api-v1 runs CentOS 7 (EOL). CSPM flags as HIGH vulnerability risk. Instance is serving <0.01% of connected vehicle traffic from 2018-era vehicles with hardcoded API endpoint. Scheduled for decommission when last 2018 model year vehicles age out (2026 Q4).",
+    "scenario": "GCP Compute instance acmecorp-legacy-connected-api-v1 runs CentOS 7 (EOL). CSPM flags as HIGH vulnerability risk. Instance is serving <0.01% of connected vehicle traffic from 2018-era vehicles with hardcoded API endpoint. Scheduled for decommission when last 2018 model year vehicles age out (2026 Q4).",
     "why_misclassified": "EC-11: EC-11 sunset workload. Instance is in planned decommission path with hard cutoff date. 2018 model year vehicles cannot be updated to use new API. Resource is isolated in legacy VPC with firewall rules restricting to model-specific vehicle certificate CN patterns.",
-    "detection_signal": "CentOS 7 EOL on haea-legacy-connected-api-v1 \u2014 HIGH: unsupported OS with no security patches",
+    "detection_signal": "CentOS 7 EOL on acmecorp-legacy-connected-api-v1 \u2014 HIGH: unsupported OS with no security patches",
     "ground_truth": "Legitimate sunset period for compatibility with 2018 fleet. Isolated legacy VPC with no lateral network access. Vehicle certificate pinning restricts clients. Decommission date: 2026-12-01. Compensating: CrowdStrike monitoring.",
-    "remediation_impact": "Accept risk with documented decommission date. Ensure isolation is verified quarterly. Add decommission tracking to HAEA-LEGACY-SUNSET-2026 ticket.",
+    "remediation_impact": "Accept risk with documented decommission date. Ensure isolation is verified quarterly. Add decommission tracking to ACMECORP-LEGACY-SUNSET-2026 ticket.",
     "confidence": 0.89
   },
   {
@@ -2072,7 +2072,7 @@
     "resource_type": "aws_rds_instance",
     "environment": "dev",
     "compliance_frameworks": [],
-    "scenario": "RDS instance haea-adas-synthetic-training-db lacks deletion protection. Database contains synthetically generated ADAS training scenarios from closed-course testing (no real road data, no PII). Used for ADAS algorithm development only.",
+    "scenario": "RDS instance acmecorp-adas-synthetic-training-db lacks deletion protection. Database contains synthetically generated ADAS training scenarios from closed-course testing (no real road data, no PII). Used for ADAS algorithm development only.",
     "why_misclassified": "EC-21: Synthetic data store. No real vehicle events, no PII, no production dependencies. Data is regenerable from closed-course test scripts. Deletion protection would complicate dev teardown cycles.",
     "detection_signal": "RDS deletion protection=false \u2014 MEDIUM: production database unprotected from accidental deletion",
     "ground_truth": "Synthetic data only \u2014 all scenarios generated by ADAS test harness simulator. Data can be regenerated in ~4 hours from seed scripts. Dev database intentionally without deletion protection for environment lifecycle management.",
@@ -2138,7 +2138,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Secrets Manager secret haea-ota-vehicle-ca-cert not rotated in 365 days. CSPM flags as stale credential. The 'credential' is an X.509 CA certificate (public cert only, 5-year validity) used to validate vehicle-presented client certificates during OTA download.",
+    "scenario": "Secrets Manager secret acmecorp-ota-vehicle-ca-cert not rotated in 365 days. CSPM flags as stale credential. The 'credential' is an X.509 CA certificate (public cert only, 5-year validity) used to validate vehicle-presented client certificates during OTA download.",
     "why_misclassified": "EC-25: Certificate is intentionally immutable during validity period \u2014 rotating a CA cert invalidates all issued vehicle certificates (millions of TCU certificates). EC-25 immutable rotation pattern. 5-year CA lifecycle is standard PKI practice.",
     "detection_signal": "Secrets Manager secret age=365 days \u2014 HIGH: credential not rotated within annual policy",
     "ground_truth": "X.509 CA certificate (not a password or API key). CA cert validity is 5 years by design (must outlive all issued leaf certs). Annual rotation would require re-provisioning vehicle PKI for entire fleet. EC-25: immutable by design. Suppress.",
@@ -2204,7 +2204,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "NACL for HAEA telematics VPC allows all inbound traffic (ALLOW * rule). CSPM flags as permissive NACL. However, VPC has no internet gateway \u2014 all inbound traffic is via Transit Gateway from corporate network. NACL permissiveness is irrelevant without an IGW.",
+    "scenario": "NACL for AcmeCorp telematics VPC allows all inbound traffic (ALLOW * rule). CSPM flags as permissive NACL. However, VPC has no internet gateway \u2014 all inbound traffic is via Transit Gateway from corporate network. NACL permissiveness is irrelevant without an IGW.",
     "why_misclassified": "EC-17: NACL lockdown via network topology \u2014 no IGW means no internet traffic can enter regardless of NACL rule. Security enforced by absence of internet gateway rather than NACL rules.",
     "detection_signal": "NACL inbound rule ALLOW ALL on telematics VPC \u2014 MEDIUM: permissive network ACL",
     "ground_truth": "VPC route table has no 0.0.0.0/0 \u2192 IGW entry. All traffic enters via Transit Gateway from corporate network. NACL permissiveness is irrelevant architectural artifact from VPC template. Defense-in-depth recommendation: add restrictive NACL but not a security gap.",
@@ -2248,10 +2248,10 @@
     "compliance_frameworks": [
       "UNECE-WP29"
     ],
-    "scenario": "GCP Cloud Run service haea-ev-station-availability-api allows unauthenticated invocations. CSPM flags as HIGH. Organization policy 'constraints/iam.allowedPolicyMemberDomains' would normally block this, but a domain exception was added for this service explicitly for OCPI protocol compliance.",
+    "scenario": "GCP Cloud Run service acmecorp-ev-station-availability-api allows unauthenticated invocations. CSPM flags as HIGH. Organization policy 'constraints/iam.allowedPolicyMemberDomains' would normally block this, but a domain exception was added for this service explicitly for OCPI protocol compliance.",
     "why_misclassified": "EC-40: GCP org policy override intentionally applied to this service for EV charging OCPI open endpoint requirement. CSPM flags org policy exception as misconfiguration but it is intentional and documented.",
     "detection_signal": "Cloud Run service allows allUsers \u2014 HIGH: unauthenticated public endpoint (org policy override detected)",
-    "ground_truth": "EV station availability API must be publicly accessible per OCPI 2.2.1 protocol requirements. Org policy exception is documented in HAEA-CLOUD-EXCEPTION-2024-112. Service returns only public station data (no PII). WAF rate limiting applied.",
+    "ground_truth": "EV station availability API must be publicly accessible per OCPI 2.2.1 protocol requirements. Org policy exception is documented in ACMECORP-CLOUD-EXCEPTION-2024-112. Service returns only public station data (no PII). WAF rate limiting applied.",
     "remediation_impact": "No action. Document org policy exception purpose. Add CSPM exception for OCPI-tagged Cloud Run services.",
     "confidence": 0.93
   },
@@ -2294,7 +2294,7 @@
       "ISO-21434",
       "UNECE-WP29"
     ],
-    "scenario": "EKS cluster haea-connected-services-prod has public API endpoint enabled with CIDR restriction to 10.0.0.0/8 + 203.0.113.0/24 (HAEA Korea IT CIDR). CSPM flags public endpoint as HIGH because it has internet reachability.",
+    "scenario": "EKS cluster acmecorp-connected-services-prod has public API endpoint enabled with CIDR restriction to 10.0.0.0/8 + 203.0.113.0/24 (AcmeCorp Korea IT CIDR). CSPM flags public endpoint as HIGH because it has internet reachability.",
     "why_misclassified": "EC-52: ISO 21434 automotive infrastructure context. EKS API endpoint restricted to specific corporate CIDRs. Korea IT team requires direct kubectl access for emergency OTA rollback operations \u2014 private endpoint only would break Korea-region DR runbook.",
     "detection_signal": "EKS cluster public endpoint=enabled \u2014 HIGH: Kubernetes API server internet accessible",
     "ground_truth": "Public endpoint restricted to corporate CIDRs. Korea IT CIDR (203.0.113.0/24) required for DR runbook compliance per UNECE WP.29 business continuity requirement. RBAC + OPA admission control further restrict access. Medium severity appropriate; remediation path: VPN-based private access.",
@@ -2316,8 +2316,8 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Security Hub finding for S3 bucket haea-ota-logs-archive shows as REOPENED after being suppressed. Timestamp mismatch between Security Hub (UTC) and SIEM ingestion (KST+9) causes finding to appear as new/reopened on daily delta reports.",
-    "why_misclassified": "EC-48: Timezone mismatch false REOPENED. Security Hub uses UTC; HAEA SIEM ingests in Korea Standard Time (UTC+9). A suppression applied at 23:30 UTC appears as next-day new event in KST-indexed SIEM. Duplicate alert on unchanged finding.",
+    "scenario": "Security Hub finding for S3 bucket acmecorp-ota-logs-archive shows as REOPENED after being suppressed. Timestamp mismatch between Security Hub (UTC) and SIEM ingestion (KST+9) causes finding to appear as new/reopened on daily delta reports.",
+    "why_misclassified": "EC-48: Timezone mismatch false REOPENED. Security Hub uses UTC; AcmeCorp SIEM ingests in Korea Standard Time (UTC+9). A suppression applied at 23:30 UTC appears as next-day new event in KST-indexed SIEM. Duplicate alert on unchanged finding.",
     "detection_signal": "Finding status=REOPENED on previously suppressed S3 finding \u2014 HIGH: suppressed control re-opened",
     "ground_truth": "Finding was correctly suppressed. UTC/KST timezone boundary creates false REOPENED status in SIEM correlation. Underlying S3 bucket logging configuration unchanged. CSPM suppression still active.",
     "remediation_impact": "No security action. Fix SIEM ingestion to normalize timestamps to UTC before correlation. Add timezone-aware deduplication for Security Hub \u2192 SIEM pipeline.",
@@ -2358,7 +2358,7 @@
     "resource_type": "gcp_project",
     "environment": "dev",
     "compliance_frameworks": [],
-    "scenario": "GCP project kia-hil-simulation-dev has project-wide SSH key configured. CSPM flags as HIGH lateral movement risk. Project contains only HIL simulation VMs for hardware-in-the-loop automotive ECU testing \u2014 no production data, no vehicle connections.",
+    "scenario": "GCP project brand2-hil-simulation-dev has project-wide SSH key configured. CSPM flags as HIGH lateral movement risk. Project contains only HIL simulation VMs for hardware-in-the-loop automotive ECU testing \u2014 no production data, no vehicle connections.",
     "why_misclassified": "EC-09: Dev/test environment. HIL simulation project is isolated, contains only synthetic test scenarios and ECU emulators. No production vehicle connections. Project-wide SSH key simplifies test engineer access to simulation fleet.",
     "detection_signal": "Project-wide SSH key configured \u2014 HIGH: lateral movement vector across all project VMs",
     "ground_truth": "Isolated HIL test project with no production data or vehicle connections. Project-wide SSH acceptable for test engineer velocity in isolated dev environment. No lateral movement risk beyond simulation VMs.",
@@ -2380,7 +2380,7 @@
     "compliance_frameworks": [
       "UNECE-WP29"
     ],
-    "scenario": "S3 bucket policy for haea-ota-firmware-dist-prod does not explicitly deny HTTP (aws:SecureTransport condition absent). CSPM flags. Bucket requires presigned URL access \u2014 presigned URLs are HTTPS-only and expire in 60 seconds. Vehicles generate presigned HTTPS URLs from the OTA campaign manager.",
+    "scenario": "S3 bucket policy for acmecorp-ota-firmware-dist-prod does not explicitly deny HTTP (aws:SecureTransport condition absent). CSPM flags. Bucket requires presigned URL access \u2014 presigned URLs are HTTPS-only and expire in 60 seconds. Vehicles generate presigned HTTPS URLs from the OTA campaign manager.",
     "why_misclassified": "EC-52: Automotive OTA context. Presigned URL generation enforces HTTPS at the signing step. Vehicles only receive HTTPS presigned URLs. HTTP path physically unreachable without a valid presigned URL. Adding explicit deny is defense-in-depth but not a real gap.",
     "detection_signal": "S3 bucket policy missing aws:SecureTransport deny \u2014 MEDIUM: unencrypted HTTP access possible",
     "ground_truth": "All access via HTTPS presigned URLs with 60-second TTL. HTTP access requires a valid presigned URL \u2014 which can only be generated via HTTPS API call. Practical HTTP attack surface: zero. Defense-in-depth improvement: add SecureTransport condition.",
@@ -2403,7 +2403,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Azure SQL Server haea-telematics-sqlserver has 'Allow Azure Services and resources' firewall rule enabled. CSPM flags as broad exposure. This rule is required for Azure Data Factory pipelines processing vehicle telematics ETL from IoT Hub to SQL.",
+    "scenario": "Azure SQL Server acmecorp-telematics-sqlserver has 'Allow Azure Services and resources' firewall rule enabled. CSPM flags as broad exposure. This rule is required for Azure Data Factory pipelines processing vehicle telematics ETL from IoT Hub to SQL.",
     "why_misclassified": "EC-52: ISO 21434 data pipeline context. 'Allow Azure services' enables Azure-internal traffic only (Azure backbone network) \u2014 not internet traffic. Required for ADF managed integration runtime.",
     "detection_signal": "SQL Server allow Azure Services=true \u2014 HIGH: database accessible from all Azure services",
     "ground_truth": "'Allow Azure Services' permits Azure backbone traffic only (not internet). Required for ADF integration runtime to process vehicle telematics ETL. Private endpoint also configured for application traffic. Medium severity because 'all Azure services' is still broader than necessary \u2014 ADF private link is roadmap item.",
@@ -2425,7 +2425,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP SCC alert: new service account key created for haea-ota-deploy-sa during automated quarterly key rotation. CSPM flags as potential credential exfiltration. Key creation is part of automated 90-day rotation job running at 02:00 UTC Sunday.",
+    "scenario": "GCP SCC alert: new service account key created for acmecorp-ota-deploy-sa during automated quarterly key rotation. CSPM flags as potential credential exfiltration. Key creation is part of automated 90-day rotation job running at 02:00 UTC Sunday.",
     "why_misclassified": "EC-23: Warm-up/rotation window. Key creation is triggered by scheduled automation (CloudScheduler job rotate-sa-keys). CSPM has no awareness of expected rotation schedule. New key creation during known rotation window is expected.",
     "detection_signal": "New SA key created outside business hours \u2014 HIGH: potential credential exfiltration",
     "ground_truth": "Automated quarterly rotation at 02:00 UTC Sunday. Previous key deleted 2 hours after new key validated. CloudScheduler job audit trail confirms expected rotation. CSPM alert firing on normal rotation cadence.",
@@ -2447,9 +2447,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "AWS Inspector flags CVE-2023-45283 in github.com/haea-ota/sdk package version v1.2.3 in SBOM for OTA campaign manager container. SBOM shows package imported but static analysis reveals import is in an unused test helper file not compiled into binary.",
+    "scenario": "AWS Inspector flags CVE-2023-45283 in github.com/acmecorp-ota/sdk package version v1.2.3 in SBOM for OTA campaign manager container. SBOM shows package imported but static analysis reveals import is in an unused test helper file not compiled into binary.",
     "why_misclassified": "EC-44: SBOM includes package never actually compiled or linked into final binary. Package appears in go.sum (transitive dependency) but import paths in affected file are in //go:build ignore-tagged code block.",
-    "detection_signal": "CVE-2023-45283 in haea-ota/sdk package in SBOM \u2014 HIGH: vulnerable package in production container",
+    "detection_signal": "CVE-2023-45283 in acmecorp-ota/sdk package in SBOM \u2014 HIGH: vulnerable package in production container",
     "ground_truth": "Package in go.sum as reachable path but actual import is in //go:build ignore guarded source file. Binary does not contain the vulnerable code. SBOM-based scanning without build graph analysis generates false positive for never-imported packages.",
     "remediation_impact": "Run go mod tidy to remove unused transitive dependency. Add build graph verification step to scanner pipeline.",
     "confidence": 0.91
@@ -2470,8 +2470,8 @@
       "ISO-21434",
       "UNECE-WP29"
     ],
-    "scenario": "AWS IoT Core policy for vehicle fleet allows iot:Subscribe on topic filter haea/vehicles/*/telemetry/# (wildcard). CSPM flags as overly permissive IoT policy enabling cross-vehicle data access. Each vehicle TCU can only use the wildcard for its own VIN-scoped subscriptions.",
-    "why_misclassified": "EC-52: IoT Core policy evaluation with automotive fleet context. The * in haea/vehicles/*/telemetry/ is an MQTT variable expansion resolved to the vehicle's own thing name by IoT Core thing policy variables. Each vehicle's certificate only resolves to its own VIN.",
+    "scenario": "AWS IoT Core policy for vehicle fleet allows iot:Subscribe on topic filter acmecorp/vehicles/*/telemetry/# (wildcard). CSPM flags as overly permissive IoT policy enabling cross-vehicle data access. Each vehicle TCU can only use the wildcard for its own VIN-scoped subscriptions.",
+    "why_misclassified": "EC-52: IoT Core policy evaluation with automotive fleet context. The * in acmecorp/vehicles/*/telemetry/ is an MQTT variable expansion resolved to the vehicle's own thing name by IoT Core thing policy variables. Each vehicle's certificate only resolves to its own VIN.",
     "detection_signal": "IoT policy allows wildcard topic Subscribe \u2014 HIGH: vehicles can subscribe to other vehicles' telemetry",
     "ground_truth": "IoT Core thing policy variable ${iot:Connection.Thing.ThingName} restricts each vehicle to its own topic namespace at policy evaluation time. Wildcard in policy definition is resolved per-vehicle. Cross-vehicle subscription blocked by IoT Core policy engine.",
     "remediation_impact": "No action. Document IoT thing policy variable evaluation semantics. Confirm policy uses ${iot:Connection.Thing.ThingName} variable correctly.",
@@ -2492,7 +2492,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Security Hub generates duplicate HIGH findings for S3 bucket haea-ota-firmware-kr across two aggregated regions (us-east-1 primary and ap-northeast-2 replica). CRR (Cross-Region Replication) causes same logical finding to appear in both source and replica regions.",
+    "scenario": "Security Hub generates duplicate HIGH findings for S3 bucket acmecorp-ota-firmware-kr across two aggregated regions (us-east-1 primary and ap-northeast-2 replica). CRR (Cross-Region Replication) causes same logical finding to appear in both source and replica regions.",
     "why_misclassified": "EC-38: Cross-region replication duplicate findings. Security Hub finding aggregation from CRR source and destination creates duplicate alerts for the same logical control gap.",
     "detection_signal": "S3 bucket access logging missing \u2014 HIGH (appears in both us-east-1 and ap-northeast-2 finding lists)",
     "ground_truth": "Single logical finding duplicated across regions by CRR. Underlying issue (access logging) is one finding requiring one remediation. CRR creates phantom second finding for the replica bucket. Alert volume doubles without additional security value.",
@@ -2536,10 +2536,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure Public IP haea-ota-dr-failover-pip is allocated but not associated with any network resource. CSPM flags as unused resource with attack surface risk. IP is reserved for OTA DR failover scenario \u2014 pre-allocated to enable fast DNS cutover during disaster recovery.",
+    "scenario": "Azure Public IP acmecorp-ota-dr-failover-pip is allocated but not associated with any network resource. CSPM flags as unused resource with attack surface risk. IP is reserved for OTA DR failover scenario \u2014 pre-allocated to enable fast DNS cutover during disaster recovery.",
     "why_misclassified": "EC-07: Orphaned IP with deliberate DR reservation. Unassociated public IP has no attack surface \u2014 no resource behind it to attack. IP reservation for DR purposes is legitimate operational practice.",
     "detection_signal": "Azure Public IP unassociated with any NIC or LB \u2014 MEDIUM: unused attack surface",
-    "ground_truth": "Unassociated public IP has zero attack surface \u2014 no packets route anywhere. Reserved for DR failover DNS cutover per HAEA-DR-OTA-RUNBOOK v2.1. Cost: ~$3/month. No security risk.",
+    "ground_truth": "Unassociated public IP has zero attack surface \u2014 no packets route anywhere. Reserved for DR failover DNS cutover per ACMECORP-DR-OTA-RUNBOOK v2.1. Cost: ~$3/month. No security risk.",
     "remediation_impact": "No action. Document DR reservation purpose. Cost optimization review: evaluate NAT Gateway-based DR approach that doesn't require pre-allocated public IP.",
     "confidence": 0.93
   },
@@ -2559,10 +2559,10 @@
       "ISO-21434",
       "UNECE-WP29"
     ],
-    "scenario": "GKE cluster haea-telematics-ingest-prod does not use private nodes (nodes have public IPs). CSPM flags as HIGH network exposure. Cluster nodes are in a VPC with no default internet route; node public IPs are unused connectivity paths blocked by VPC firewall.",
+    "scenario": "GKE cluster acmecorp-telematics-ingest-prod does not use private nodes (nodes have public IPs). CSPM flags as HIGH network exposure. Cluster nodes are in a VPC with no default internet route; node public IPs are unused connectivity paths blocked by VPC firewall.",
     "why_misclassified": "EC-52: GKE private cluster context for automotive telematics. Nodes have public IPs by GKE default but VPC firewall blocks all inbound. UNECE WP.29 backend security requires inbound restriction, achieved via firewall. Migration to private cluster is best practice but not an immediate gap.",
     "detection_signal": "GKE cluster private_cluster_config.enable_private_nodes=false \u2014 HIGH: cluster nodes have public IPs",
-    "ground_truth": "Public node IPs blocked by VPC firewall deny-all-inbound rule. Nodes access internet for GCR pulls via Cloud NAT (no public IP actually reachable inbound). Migration to private cluster is on HAEA-CLOUD-HARDENING-2026 roadmap. Medium risk until migrated.",
+    "ground_truth": "Public node IPs blocked by VPC firewall deny-all-inbound rule. Nodes access internet for GCR pulls via Cloud NAT (no public IP actually reachable inbound). Migration to private cluster is on ACMECORP-CLOUD-HARDENING-2026 roadmap. Medium risk until migrated.",
     "remediation_impact": "Medium-term: migrate to private nodes (GKE cluster upgrade required). Short-term: document firewall compensating control. Priority: complete before next UNECE WP.29 audit.",
     "confidence": 0.88
   },
@@ -2581,10 +2581,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "S3 bucket kia-supplier-portal-documents has a bucket policy granting s3:GetObject to arn:aws:iam::999988887777:root. CSPM classifies as INFO because the policy appears to grant access to a specific AWS account root, which looks like a standard cross-account share. Account 999988887777 is a former Tier-1 supplier (Magna International) whose contract ended 18 months ago. The supplier account root has unfettered download access to current vehicle design documents.",
+    "scenario": "S3 bucket brand2-supplier-portal-documents has a bucket policy granting s3:GetObject to arn:aws:iam::999988887777:root. CSPM classifies as INFO because the policy appears to grant access to a specific AWS account root, which looks like a standard cross-account share. Account 999988887777 is a former Tier-1 supplier (Apex Components Ltd) whose contract ended 18 months ago. The supplier account root has unfettered download access to current vehicle design documents.",
     "why_misclassified": "EC-23: scanner evaluates policy syntax correctness (specific account ARN, not wildcard) as low risk without checking whether the trusted account is still a valid business partner. Orphaned cross-account access to a former supplier is a significant data exfiltration risk.",
-    "detection_signal": "S3 bucket kia-supplier-portal-documents policy grants access to account 999988887777 \u2014 INFO: cross-account access with specific account ARN",
-    "ground_truth": "Account 999988887777 belongs to Magna International, whose Kia supplier agreement terminated 2023-06. The account still has active read access to 47GB of current vehicle design data. This is a data leak to a former third party.",
+    "detection_signal": "S3 bucket brand2-supplier-portal-documents policy grants access to account 999988887777 \u2014 INFO: cross-account access with specific account ARN",
+    "ground_truth": "Account 999988887777 belongs to Apex Components Ltd, whose Brand2 supplier agreement terminated 2023-06. The account still has active read access to 47GB of current vehicle design data. This is a data leak to a former third party.",
     "remediation_impact": "Immediate removal of bucket policy statement for account 999988887777. Audit download logs (S3 access logging) for any exfiltration since contract termination. Notify TISAX assessor of potential data breach.",
     "confidence": 0.96
   },
@@ -2604,9 +2604,9 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Azure Key Vault secret hyundai-telematics-db-password in vault kv-telematics-prod has not been rotated in 14 months. CSPM reports LOW because the secret is stored in Key Vault (correct practice) and has not expired. The telematics database uses this password for 847 concurrent vehicle gateway connections. The password is encoded in vehicle firmware deployed 14 months ago. If this password were compromised, an attacker could access the telemetry database for all connected Hyundai vehicles.",
+    "scenario": "Azure Key Vault secret automotive-telematics-db-password in vault kv-telematics-prod has not been rotated in 14 months. CSPM reports LOW because the secret is stored in Key Vault (correct practice) and has not expired. The telematics database uses this password for 847 concurrent vehicle gateway connections. The password is encoded in vehicle firmware deployed 14 months ago. If this password were compromised, an attacker could access the telemetry database for all connected automotive vehicles.",
     "why_misclassified": "EC-36: scanner treats Key Vault storage as sufficient control and assigns LOW to non-expired secrets. It misses the criticality of the secret (used by millions of vehicle connections) and the extended rotation window creating exposure.",
-    "detection_signal": "Key Vault secret hyundai-telematics-db-password age 14 months \u2014 LOW: secret present in Key Vault, no expiry violation",
+    "detection_signal": "Key Vault secret automotive-telematics-db-password age 14 months \u2014 LOW: secret present in Key Vault, no expiry violation",
     "ground_truth": "Secret controls database access for 2.1M connected vehicles. 14-month rotation gap exceeds TISAX AL2 requirement of 90-day rotation for production credentials. Compromise would expose vehicle telemetry data for the entire fleet.",
     "remediation_impact": "Rotation requires coordinated firmware update to all vehicles or migration to certificate-based auth. Immediate interim mitigation: enable Key Vault alerting and restrict network access to DB to known gateway IPs.",
     "confidence": 0.94
@@ -2627,9 +2627,9 @@
       "ISO-21434",
       "UNECE WP.29"
     ],
-    "scenario": "GCP SSL policy hyundai-connected-car-ssl allows TLS 1.1 and cipher suites including TLS_RSA_WITH_AES_128_CBC_SHA. CSPM reports LOW because TLS 1.1 is not completely deprecated and the policy has a minimum TLS version configured (unlike policies with no minimum). The V2C (Vehicle-to-Cloud) API endpoint serves authenticated vehicle command-and-control traffic. TLS 1.1 and CBC cipher suites are vulnerable to BEAST and Lucky13 attacks, putting vehicle command integrity at risk.",
+    "scenario": "GCP SSL policy automotive-connected-car-ssl allows TLS 1.1 and cipher suites including TLS_RSA_WITH_AES_128_CBC_SHA. CSPM reports LOW because TLS 1.1 is not completely deprecated and the policy has a minimum TLS version configured (unlike policies with no minimum). The V2C (Vehicle-to-Cloud) API endpoint serves authenticated vehicle command-and-control traffic. TLS 1.1 and CBC cipher suites are vulnerable to BEAST and Lucky13 attacks, putting vehicle command integrity at risk.",
     "why_misclassified": "EC-11: scanner scores based on presence of a minimum TLS version (any) rather than whether the minimum meets current standards. TLS 1.1 with CBC ciphers is considered broken for V2X security per UNECE WP.29 cybersecurity guidelines.",
-    "detection_signal": "SSL policy hyundai-connected-car-ssl minimum TLS 1.1 \u2014 LOW: TLS version policy configured",
+    "detection_signal": "SSL policy automotive-connected-car-ssl minimum TLS 1.1 \u2014 LOW: TLS version policy configured",
     "ground_truth": "UNECE WP.29 Annex 5 requires TLS 1.2+ with forward secrecy for V2C communications. TLS 1.1 with CBC is vulnerable to BEAST (CVE-2011-3389). Vehicle command channels must use TLS 1.2+ with ECDHE. Current policy violates WP.29 cybersecurity requirements.",
     "remediation_impact": "Update SSL policy minimum to TLS 1.2, restrict to ECDHE cipher suites. Validate that all vehicle firmware versions support TLS 1.2 (all models after 2019 do). Legacy 2018 Tucson (1.2% of fleet) may require separate policy.",
     "confidence": 0.93
@@ -2650,9 +2650,9 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Azure AD user svc-ota-deploy@hyundai.com has Owner role on subscription hyundai-connected-prod with no MFA enrollment. CSPM reports INFO because the account shows recent activity (login 3 days ago) and has a valid license. This service account owns the production subscription containing OTA update infrastructure for 1.2M Hyundai vehicles. No MFA means a compromised password could give an attacker full control over OTA update pipelines, enabling malicious firmware delivery.",
+    "scenario": "Azure AD user svc-ota-deploy@acmecorp.com has Owner role on subscription acmecorp-connected-prod with no MFA enrollment. CSPM reports INFO because the account shows recent activity (login 3 days ago) and has a valid license. This service account owns the production subscription containing OTA update infrastructure for 1.2M automotive vehicles. No MFA means a compromised password could give an attacker full control over OTA update pipelines, enabling malicious firmware delivery.",
     "why_misclassified": "EC-48: scanner treats recent activity as a health indicator rather than flagging MFA absence on a privileged account. Account activity does not compensate for missing MFA on an Owner-role service principal.",
-    "detection_signal": "Azure AD svc-ota-deploy@hyundai.com Owner role, active 3 days ago \u2014 INFO: account active and licensed",
+    "detection_signal": "Azure AD svc-ota-deploy@acmecorp.com Owner role, active 3 days ago \u2014 INFO: account active and licensed",
     "ground_truth": "Owner role with no MFA on OTA infrastructure subscription is a CRITICAL finding. A compromised password enables full subscription control including modification of OTA pipelines, potentially enabling malicious firmware delivery to 1.2M vehicles. TISAX AL3 requires MFA for all privileged identities.",
     "remediation_impact": "Immediate: enable Conditional Access policy requiring MFA for all Owner-role accounts. Transition svc-ota-deploy to service principal with Managed Identity. Remove human-format credentials from OTA deployment pipeline.",
     "confidence": 0.97
@@ -2672,9 +2672,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP service account key for kia-adas-inference@kia-prod.iam.gserviceaccount.com is 89 days old. CSPM reports LOW because the organization policy enforces 90-day key expiry and this key has not yet expired. The key is embedded in 340 ADAS inference edge devices deployed in Kia manufacturing plants. When the key expires tomorrow, all ADAS inference will fail simultaneously across all plants, halting production. There is no automated rotation mechanism.",
+    "scenario": "GCP service account key for brand2-adas-inference@brand2-prod.iam.gserviceaccount.com is 89 days old. CSPM reports LOW because the organization policy enforces 90-day key expiry and this key has not yet expired. The key is embedded in 340 ADAS inference edge devices deployed in Brand2 manufacturing plants. When the key expires tomorrow, all ADAS inference will fail simultaneously across all plants, halting production. There is no automated rotation mechanism.",
     "why_misclassified": "EC-14: scanner reports status as LOW because the key hasn't expired yet, missing the operational impact of imminent expiration across 340 production edge devices with no rotation automation.",
-    "detection_signal": "Service account key kia-adas-inference age 89 days \u2014 LOW: key within 90-day rotation policy window",
+    "detection_signal": "Service account key brand2-adas-inference age 89 days \u2014 LOW: key within 90-day rotation policy window",
     "ground_truth": "Key expires in 24 hours. 340 edge devices will lose ADAS inference capability simultaneously. No automated rotation pipeline exists. Manual rotation of 340 devices requires 48-72 hours minimum. Plants will be halted.",
     "remediation_impact": "Emergency: rotate key immediately, push to all 340 devices via MDM (if available) or manual intervention. Long-term: implement Workload Identity Federation for edge devices or certificate-based auth with auto-rotation.",
     "confidence": 0.95
@@ -2694,9 +2694,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "IAM role hyundai-telematics-processor-role has an inline policy with Action: s3:* on a specific bucket ARN (arn:aws:s3:::hyundai-telematics-raw). CSPM rates this INFO because the resource scope is specific (not Resource: *). The role is used by the telemetry processing Lambda which should only need s3:GetObject and s3:PutObject. The s3:* wildcard includes s3:DeleteBucket, s3:PutBucketPolicy, and s3:PutBucketAcl \u2014 actions that could allow the Lambda to expose or delete the entire raw telemetry archive.",
+    "scenario": "IAM role automotive-telematics-processor-role has an inline policy with Action: s3:* on a specific bucket ARN (arn:aws:s3:::automotive-telematics-raw). CSPM rates this INFO because the resource scope is specific (not Resource: *). The role is used by the telemetry processing Lambda which should only need s3:GetObject and s3:PutObject. The s3:* wildcard includes s3:DeleteBucket, s3:PutBucketPolicy, and s3:PutBucketAcl \u2014 actions that could allow the Lambda to expose or delete the entire raw telemetry archive.",
     "why_misclassified": "EC-25: scanner evaluates resource scope (specific bucket ARN = good) without checking action scope. Action wildcard s3:* on a sensitive bucket grants destructive capabilities (DeleteBucket, PutBucketPolicy) to a processing Lambda.",
-    "detection_signal": "IAM role hyundai-telematics-processor-role s3:* on specific resource \u2014 INFO: resource-scoped policy, not wildcard resource",
+    "detection_signal": "IAM role automotive-telematics-processor-role s3:* on specific resource \u2014 INFO: resource-scoped policy, not wildcard resource",
     "ground_truth": "s3:* on the raw telemetry bucket grants the Lambda ability to delete the bucket, modify its ACL, or change its bucket policy. A compromised Lambda could expose or destroy the entire raw telemetry archive. Minimum permissions are s3:GetObject and s3:PutObject.",
     "remediation_impact": "Replace inline policy Action: s3:* with explicit actions [s3:GetObject, s3:PutObject] on the telemetry bucket. Also grant s3:ListBucket on the bucket for prefix listing.",
     "confidence": 0.92
@@ -2716,9 +2716,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GKE cluster hyundai-connected-services-gke has Kubernetes Network Policy disabled. CSPM reports HIGH for missing pod-level network isolation. This cluster uses Google Cloud's Dataplane V2 (eBPF-based) which implements network policy enforcement natively without requiring the Kubernetes NetworkPolicy resource. The NetworkPolicy feature gate is disabled because Dataplane V2 handles all network policy enforcement at the eBPF layer.",
+    "scenario": "GKE cluster automotive-connected-services-gke has Kubernetes Network Policy disabled. CSPM reports HIGH for missing pod-level network isolation. This cluster uses Google Cloud's Dataplane V2 (eBPF-based) which implements network policy enforcement natively without requiring the Kubernetes NetworkPolicy resource. The NetworkPolicy feature gate is disabled because Dataplane V2 handles all network policy enforcement at the eBPF layer.",
     "why_misclassified": "EC-10: GKE Dataplane V2 provides network policy enforcement via eBPF regardless of the Kubernetes NetworkPolicy feature gate. Scanner checks for the Kubernetes-native NetworkPolicy feature without detecting Dataplane V2 enforcement.",
-    "detection_signal": "GKE cluster hyundai-connected-services-gke network policy disabled \u2014 HIGH: no pod-level network isolation in connected vehicle cluster",
+    "detection_signal": "GKE cluster automotive-connected-services-gke network policy disabled \u2014 HIGH: no pod-level network isolation in connected vehicle cluster",
     "ground_truth": "GKE Dataplane V2 (Cilium eBPF) enforces network policies at the kernel level. The Kubernetes NetworkPolicy feature gate being disabled does not indicate absence of enforcement when Dataplane V2 is the network plugin.",
     "remediation_impact": "Enabling Kubernetes NetworkPolicy feature gate on a Dataplane V2 cluster is a no-op \u2014 enforcement already happens at eBPF layer. No functional change but could be enabled for documentation/policy reasons.",
     "confidence": 0.9
@@ -2738,9 +2738,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "RDS instance hyundai-vehicle-vin-db has DeletionProtection=false. CSPM reports HIGH for automotive production database without deletion protection. This RDS instance is covered by AWS Backup with daily snapshots retained for 35 days and weekly retained for 1 year. A Service Control Policy at the AWS Organization level (SCP-PROD-001) denies rds:DeleteDBInstance for all principals in production accounts except the dedicated DBA role, which requires MFA and PIM approval to assume.",
+    "scenario": "RDS instance automotive-vehicle-vin-db has DeletionProtection=false. CSPM reports HIGH for automotive production database without deletion protection. This RDS instance is covered by AWS Backup with daily snapshots retained for 35 days and weekly retained for 1 year. A Service Control Policy at the AWS Organization level (SCP-PROD-001) denies rds:DeleteDBInstance for all principals in production accounts except the dedicated DBA role, which requires MFA and PIM approval to assume.",
     "why_misclassified": "EC-53: deletion protection at RDS level is redundant when SCP-level deletion denial and backup policies provide equivalent or stronger protection. Scanner evaluates resource-level configuration without checking org-level SCP controls.",
-    "detection_signal": "RDS hyundai-vehicle-vin-db DeletionProtection=false \u2014 HIGH: vehicle VIN database without deletion protection",
+    "detection_signal": "RDS automotive-vehicle-vin-db DeletionProtection=false \u2014 HIGH: vehicle VIN database without deletion protection",
     "ground_truth": "SCP-PROD-001 denies rds:DeleteDBInstance for all production account principals except PIM-gated DBA role with MFA. AWS Backup provides 35-day daily and 1-year weekly snapshots. DeletionProtection=false is a cosmetic gap given SCP enforcement.",
     "remediation_impact": "Enabling DeletionProtection is a one-line Terraform change and is recommended as defense-in-depth. However, the CRITICAL/HIGH urgency is unwarranted given SCP and backup controls.",
     "confidence": 0.88
@@ -2761,10 +2761,10 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Azure VM kia-hmi-test-server-prod has NSG allowing RDP (TCP 3389) from 10.0.0.0/8. CSPM reports LOW because the source is a private RFC1918 range. The 10.0.0.0/8 range encompasses the entire HMG corporate network including Tier-1 supplier VPN pools, contractor networks, and development environments. The VM hosts HMI (Human-Machine Interface) software signing keys used to sign firmware deployed to Kia vehicle infotainment systems. Access from any of the ~50,000 corporate network users (including contractors) puts signing keys at risk.",
+    "scenario": "Azure VM brand2-hmi-test-server-prod has NSG allowing RDP (TCP 3389) from 10.0.0.0/8. CSPM reports LOW because the source is a private RFC1918 range. The 10.0.0.0/8 range encompasses the entire automotive group corporate network including Tier-1 supplier VPN pools, contractor networks, and development environments. The VM hosts HMI (Human-Machine Interface) software signing keys used to sign firmware deployed to Brand2 vehicle infotainment systems. Access from any of the ~50,000 corporate network users (including contractors) puts signing keys at risk.",
     "why_misclassified": "EC-16: scanner treats RFC1918 as a safe source without evaluating the breadth of 10.0.0.0/8 (entire corporate network including contractors) or the criticality of the protected asset (HMI signing keys).",
-    "detection_signal": "VM kia-hmi-test-server-prod NSG allows RDP from 10.0.0.0/8 \u2014 LOW: private network RDP source",
-    "ground_truth": "HMI signing keys on this server are used to sign vehicle infotainment firmware. RDP from 10.0.0.0/8 includes ~50K users including contractors. A compromised signing key could enable malicious HMI firmware deployment to all Kia vehicles with OTA capability.",
+    "detection_signal": "VM brand2-hmi-test-server-prod NSG allows RDP from 10.0.0.0/8 \u2014 LOW: private network RDP source",
+    "ground_truth": "HMI signing keys on this server are used to sign vehicle infotainment firmware. RDP from 10.0.0.0/8 includes ~50K users including contractors. A compromised signing key could enable malicious HMI firmware deployment to all Brand2 vehicles with OTA capability.",
     "remediation_impact": "Restrict NSG to specific signing operator workstation IPs (3 machines). Move to Azure Bastion with PIM for all RDP access. Migrate signing keys to Azure Dedicated HSM.",
     "confidence": 0.96
   },
@@ -2783,10 +2783,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Cloud Function hyundai-vehicle-command-dispatcher has HTTP trigger with allUsers invoker. CSPM reports HIGH for unauthenticated Cloud Function on vehicle command path. The Cloud Function is fronted by API Gateway with a JWT authorizer. allUsers is set at the Cloud Function level to allow API Gateway (which uses a Google-managed service account) to invoke it without needing per-request IAM auth tokens. The API Gateway validates the client JWT before routing to the Cloud Function.",
+    "scenario": "Cloud Function automotive-vehicle-command-dispatcher has HTTP trigger with allUsers invoker. CSPM reports HIGH for unauthenticated Cloud Function on vehicle command path. The Cloud Function is fronted by API Gateway with a JWT authorizer. allUsers is set at the Cloud Function level to allow API Gateway (which uses a Google-managed service account) to invoke it without needing per-request IAM auth tokens. The API Gateway validates the client JWT before routing to the Cloud Function.",
     "why_misclassified": "EC-34: allUsers at function level is required for API Gateway integration pattern. The authentication is enforced at the API Gateway layer. Scanner evaluates function-level IAM without checking API Gateway auth configuration.",
-    "detection_signal": "Cloud Function hyundai-vehicle-command-dispatcher allUsers invoker \u2014 HIGH: vehicle command function unauthenticated",
-    "ground_truth": "API Gateway validates JWT (Hyundai BlueLink app tokens) before routing. allUsers on the Cloud Function is required for the API Gateway service account to route traffic without IAM credentials on every request. This is the recommended GCP API Gateway + Cloud Functions architecture.",
+    "detection_signal": "Cloud Function automotive-vehicle-command-dispatcher allUsers invoker \u2014 HIGH: vehicle command function unauthenticated",
+    "ground_truth": "API Gateway validates JWT (Automotive ConnectLink app tokens) before routing. allUsers on the Cloud Function is required for the API Gateway service account to route traffic without IAM credentials on every request. This is the recommended GCP API Gateway + Cloud Functions architecture.",
     "remediation_impact": "Removing allUsers breaks API Gateway routing to the Cloud Function. Alternative: use Cloud Functions with Cloud Run (allows OIDC token injection). Migration is planned for Q2.",
     "confidence": 0.88
   },
@@ -2805,9 +2805,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "SNS topic hyundai-recall-broadcast does not use KMS encryption. CSPM reports MEDIUM for unencrypted SNS topic in automotive environment. The recall broadcast topic sends NHTSA-mandated recall notifications that are simultaneously published to the NHTSA public database. The notification content is public information by regulatory requirement (FMVSS 573). There is no sensitive data in recall broadcast messages.",
+    "scenario": "SNS topic automotive-recall-broadcast does not use KMS encryption. CSPM reports MEDIUM for unencrypted SNS topic in automotive environment. The recall broadcast topic sends NHTSA-mandated recall notifications that are simultaneously published to the NHTSA public database. The notification content is public information by regulatory requirement (FMVSS 573). There is no sensitive data in recall broadcast messages.",
     "why_misclassified": "EC-26: KMS encryption evaluated as blanket requirement without considering that the data transmitted is public regulatory content by law. Encrypting recall notifications that are simultaneously published publicly provides no security benefit.",
-    "detection_signal": "SNS topic hyundai-recall-broadcast no KMS encryption \u2014 MEDIUM: automotive recall notifications unencrypted in transit",
+    "detection_signal": "SNS topic automotive-recall-broadcast no KMS encryption \u2014 MEDIUM: automotive recall notifications unencrypted in transit",
     "ground_truth": "NHTSA recall notifications are publicly mandated disclosures. SNS delivers over HTTPS (TLS in transit). At-rest encryption via KMS is not meaningful for data that is simultaneously published to NHTSA public registry.",
     "remediation_impact": "Adding KMS encryption to the recall broadcast topic is a valid hygiene change but provides no security benefit for public-by-law content.",
     "confidence": 0.9
@@ -2827,11 +2827,11 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure App Service hyundai-dealer-api has App Service Authentication (Easy Auth) disabled. CSPM reports HIGH for unauthenticated app service in automotive production. The dealer API uses a custom OAuth 2.0 implementation with Hyundai's internal dealer identity provider (not Microsoft identity). Easy Auth would force Microsoft identity, which is incompatible with the Hyundai dealer IdP. The app validates Hyundai dealer JWT tokens in application middleware (ASP.NET Core authentication middleware).",
+    "scenario": "Azure App Service automotive-dealer-api has App Service Authentication (Easy Auth) disabled. CSPM reports HIGH for unauthenticated app service in automotive production. The dealer API uses a custom OAuth 2.0 implementation with the manufacturer's internal dealer identity provider (not Microsoft identity). Easy Auth would force Microsoft identity, which is incompatible with the manufacturer's dealer IdP. The app validates automotive dealer JWT tokens in application middleware (ASP.NET Core authentication middleware).",
     "why_misclassified": "EC-43: Easy Auth is Microsoft's hosted auth layer. Custom application-layer authentication is a legitimate alternative when the IdP is not Microsoft identity. Scanner equates Easy Auth disabled with 'no authentication.'",
-    "detection_signal": "App Service hyundai-dealer-api Easy Auth disabled \u2014 HIGH: automotive dealer API without authentication",
-    "ground_truth": "ASP.NET Core authentication middleware validates Hyundai dealer JWTs on every request. Easy Auth is not used because the Hyundai dealer IdP is not compatible with the Easy Auth configuration. Authentication is enforced at the application layer.",
-    "remediation_impact": "Enabling Easy Auth would break dealer authentication entirely (Hyundai dealer IdP not supported by Easy Auth). Custom middleware auth is the required implementation for this IdP.",
+    "detection_signal": "App Service automotive-dealer-api Easy Auth disabled \u2014 HIGH: automotive dealer API without authentication",
+    "ground_truth": "ASP.NET Core authentication middleware validates automotive dealer JWTs on every request. Easy Auth is not used because the manufacturer's dealer IdP is not compatible with the Easy Auth configuration. Authentication is enforced at the application layer.",
+    "remediation_impact": "Enabling Easy Auth would break dealer authentication entirely (automotive dealer IdP not supported by Easy Auth). Custom middleware auth is the required implementation for this IdP.",
     "confidence": 0.89
   },
   {
@@ -2849,10 +2849,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Cloud Memorystore Redis instance kia-session-cache does not have AUTH enabled. CSPM reports HIGH for unauthenticated Redis in automotive production. The Redis instance is configured with authorized_network restricted to the GKE private subnet (10.100.0.0/24). Only pods in the kia-session namespace with the network policy allowing egress to the Redis IP can reach the instance. VPC Service Controls perimeter prevents access from outside the project boundary.",
+    "scenario": "Cloud Memorystore Redis instance brand2-session-cache does not have AUTH enabled. CSPM reports HIGH for unauthenticated Redis in automotive production. The Redis instance is configured with authorized_network restricted to the GKE private subnet (10.100.0.0/24). Only pods in the brand2-session namespace with the network policy allowing egress to the Redis IP can reach the instance. VPC Service Controls perimeter prevents access from outside the project boundary.",
     "why_misclassified": "EC-08: Redis AUTH provides application-layer authentication. Network isolation (authorized_network + VPC Service Controls + K8s network policy) provides equivalent access restriction. Scanner requires AUTH without evaluating network controls.",
-    "detection_signal": "Memorystore Redis kia-session-cache AUTH disabled \u2014 HIGH: vehicle session cache unauthenticated",
-    "ground_truth": "Redis reachable only from 10.100.0.0/24 GKE private subnet. K8s NetworkPolicy restricts Redis access to kia-session namespace pods. VPC-SC perimeter prevents cross-project access. AUTH adds defense-in-depth but network controls make this informational.",
+    "detection_signal": "Memorystore Redis brand2-session-cache AUTH disabled \u2014 HIGH: vehicle session cache unauthenticated",
+    "ground_truth": "Redis reachable only from 10.100.0.0/24 GKE private subnet. K8s NetworkPolicy restricts Redis access to brand2-session namespace pods. VPC-SC perimeter prevents cross-project access. AUTH adds defense-in-depth but network controls make this informational.",
     "remediation_impact": "Enabling Redis AUTH requires application code changes to pass AUTH password on every connection. Should be added as defense-in-depth but urgency is LOW given network isolation.",
     "confidence": 0.87
   },
@@ -2871,9 +2871,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "AWS Backup vault hyundai-connected-backup-vault stores backups without a Vault Lock policy. CSPM reports INFO because the vault uses AWS-managed KMS key for encryption. However, the backup vault contains backups of DynamoDB tables storing vehicle authentication tokens, session data, and connected service credentials for 3.4M BlueLink users. Without Vault Lock, an administrator with BackupAdmin role could delete backups and cover traces of a ransomware or insider threat incident.",
+    "scenario": "AWS Backup vault automotive-connected-backup-vault stores backups without a Vault Lock policy. CSPM reports INFO because the vault uses AWS-managed KMS key for encryption. However, the backup vault contains backups of DynamoDB tables storing vehicle authentication tokens, session data, and connected service credentials for 3.4M ConnectLink users. Without Vault Lock, an administrator with BackupAdmin role could delete backups and cover traces of a ransomware or insider threat incident.",
     "why_misclassified": "EC-30: scanner checks for encryption (present) but not for Vault Lock immutability. Encrypted but deletable backups are inadequate for sensitive data recovery scenarios where insider threat or ransomware is the concern.",
-    "detection_signal": "Backup vault hyundai-connected-backup-vault KMS encrypted \u2014 INFO: backup vault uses managed encryption",
+    "detection_signal": "Backup vault automotive-connected-backup-vault KMS encrypted \u2014 INFO: backup vault uses managed encryption",
     "ground_truth": "Backup vault stores authentication data for 3.4M users. Vault Lock in Compliance mode would prevent backup deletion even by administrators. Without Vault Lock, a compromised BackupAdmin credential could delete all recovery points, making ransomware recovery impossible.",
     "remediation_impact": "Enable Backup Vault Lock in Compliance mode with 14-day cool-off period. Vault Lock is irreversible after cool-off period \u2014 test in non-prod first. Provides immutable recovery points for ransomware defense.",
     "confidence": 0.91
@@ -2893,9 +2893,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure SQL Server hyundai-vin-lookup has Microsoft Defender for SQL disabled. CSPM reports HIGH for SQL without threat protection. The VIN lookup database is read-only with no direct internet connectivity \u2014 all queries come from the internal API layer. The SQL Server uses Azure Private Link, IP firewall restricted to API subnet (10.50.1.0/28), and Azure AD-only authentication. The threat surface (SQL injection, anomalous queries) is defended at the API layer with parameterized queries and application WAF.",
+    "scenario": "Azure SQL Server automotive-vin-lookup has Microsoft Defender for SQL disabled. CSPM reports HIGH for SQL without threat protection. The VIN lookup database is read-only with no direct internet connectivity \u2014 all queries come from the internal API layer. The SQL Server uses Azure Private Link, IP firewall restricted to API subnet (10.50.1.0/28), and Azure AD-only authentication. The threat surface (SQL injection, anomalous queries) is defended at the API layer with parameterized queries and application WAF.",
     "why_misclassified": "EC-47: Defender for SQL is valuable for internet-exposed or multi-tenant databases. This read-only, private-link-only database with API-layer query sanitization has minimal SQL injection surface. Defense at API layer is more appropriate than DB-level threat detection.",
-    "detection_signal": "Azure SQL hyundai-vin-lookup Defender for SQL disabled \u2014 HIGH: VIN lookup database without threat protection",
+    "detection_signal": "Azure SQL automotive-vin-lookup Defender for SQL disabled \u2014 HIGH: VIN lookup database without threat protection",
     "ground_truth": "VIN lookup is read-only, Private Link only, Azure AD auth only. Parameterized queries enforced in API layer. WAF protects API surface. Defender for SQL would generate alerts for a threat surface that is effectively sealed by network and application controls.",
     "remediation_impact": "Enabling Defender for SQL adds $15/server/month. Would provide anomaly detection with high false positive rate for a read-only database with no SQL injection surface.",
     "confidence": 0.84
@@ -2915,9 +2915,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Cloud Run service hyundai-remote-diagnostics-api has CPU-always-on enabled. CSPM flags this as a compliance violation for cost efficiency policy. The remote diagnostics API must maintain persistent WebSocket connections to dealership diagnostic tools during active vehicle diagnostic sessions. Cold starts would drop active diagnostic connections, corrupting in-progress ECU calibration. CPU-always-on is required to maintain WebSocket connection state without cold start drops.",
+    "scenario": "Cloud Run service automotive-remote-diagnostics-api has CPU-always-on enabled. CSPM flags this as a compliance violation for cost efficiency policy. The remote diagnostics API must maintain persistent WebSocket connections to dealership diagnostic tools during active vehicle diagnostic sessions. Cold starts would drop active diagnostic connections, corrupting in-progress ECU calibration. CPU-always-on is required to maintain WebSocket connection state without cold start drops.",
     "why_misclassified": "EC-20: scanner flags CPU-always-on against a cost efficiency policy without evaluating the functional requirement (persistent WebSocket connections for ECU diagnostic sessions). This is a cost policy finding, not a security issue.",
-    "detection_signal": "Cloud Run hyundai-remote-diagnostics-api CPU always-on \u2014 LOW: cost efficiency policy violation",
+    "detection_signal": "Cloud Run automotive-remote-diagnostics-api CPU always-on \u2014 LOW: cost efficiency policy violation",
     "ground_truth": "WebSocket connections for vehicle ECU diagnostics require persistent CPU allocation. Cold starts drop active diagnostic sessions, potentially corrupting ECU calibration in progress. CPU-always-on is a functional requirement, not waste.",
     "remediation_impact": "Disabling CPU-always-on would drop all active diagnostic sessions during cold starts, corrupting ECU calibrations and requiring vehicle re-initialization. This is a patient safety analog in automotive context.",
     "confidence": 0.92
@@ -2937,7 +2937,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "AWS root account for hyundai-telematics-prod has an active access key. CSPM reports CRITICAL for root access key. Security team investigation shows the 'root access key' flagged is actually an access key for an IAM user named root-monitor (not the actual AWS root account). The account has MFA enabled on the actual root account and no root access keys. The IAM user root-monitor was named following an old naming convention and is used for health monitoring.",
+    "scenario": "AWS root account for automotive-telematics-prod has an active access key. CSPM reports CRITICAL for root access key. Security team investigation shows the 'root access key' flagged is actually an access key for an IAM user named root-monitor (not the actual AWS root account). The account has MFA enabled on the actual root account and no root access keys. The IAM user root-monitor was named following an old naming convention and is used for health monitoring.",
     "why_misclassified": "EC-39: scanner matches on IAM user name containing 'root' rather than specifically checking for the AWS account root (AccountID with no IAM path). IAM user root-monitor is not the AWS root account.",
     "detection_signal": "IAM user root-monitor active access key \u2014 CRITICAL: root account access key active in automotive production account",
     "ground_truth": "IAM user root-monitor is not the AWS root account. The actual AWS root account has no access keys and has MFA enabled. The naming is misleading but the security risk is to the IAM user root-monitor, not the root account.",
@@ -2959,9 +2959,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure Key Vault kv-kia-telematics-legacy has soft delete disabled. CSPM reports HIGH for Key Vault without accidental deletion protection. Microsoft enforced soft delete on all Key Vaults in February 2025 \u2014 this vault was created before the enforcement and is shown as 'disabled' in the API response but soft delete is actually active (Microsoft enforced it retroactively). The API still returns softDeleteEnabled: false for vaults created before enforcement.",
+    "scenario": "Azure Key Vault kv-brand2-telematics-legacy has soft delete disabled. CSPM reports HIGH for Key Vault without accidental deletion protection. Microsoft enforced soft delete on all Key Vaults in February 2025 \u2014 this vault was created before the enforcement and is shown as 'disabled' in the API response but soft delete is actually active (Microsoft enforced it retroactively). The API still returns softDeleteEnabled: false for vaults created before enforcement.",
     "why_misclassified": "EC-13: Azure API returns legacy softDeleteEnabled: false for vaults created before the February 2025 enforcement, but Microsoft retroactively applied soft delete protection. Scanner trusts API response without checking actual effective policy.",
-    "detection_signal": "Key Vault kv-kia-telematics-legacy softDeleteEnabled=false \u2014 HIGH: automotive cryptographic keys without deletion protection",
+    "detection_signal": "Key Vault kv-brand2-telematics-legacy softDeleteEnabled=false \u2014 HIGH: automotive cryptographic keys without deletion protection",
     "ground_truth": "Microsoft enforced soft delete on all Key Vaults in February 2025. This vault's API field shows false due to creation before enforcement, but soft delete is active. Attempting to delete any secret fails with 'SoftDeleteEnabled' protection. This is an Azure API response inconsistency.",
     "remediation_impact": "No remediation needed for soft delete \u2014 it is already active. Update CSPM suppression list for this vault. File Azure Support ticket to get API response corrected.",
     "confidence": 0.86
@@ -2981,10 +2981,10 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP service account hyundai-ota-pipeline@hyundai-prod.iam.gserviceaccount.com has roles/cloudbuild.builds.builder at project level. CSPM reports LOW because Cloud Build builder role is the standard role for build service accounts. However, this service account is used in the OTA firmware update pipeline. roles/cloudbuild.builds.builder grants the ability to trigger new builds, including builds that can run arbitrary code and push to Cloud Storage. A compromised OTA pipeline SA could trigger a build that packages malicious firmware.",
+    "scenario": "GCP service account acmecorp-ota-pipeline@acmecorp-prod.iam.gserviceaccount.com has roles/cloudbuild.builds.builder at project level. CSPM reports LOW because Cloud Build builder role is the standard role for build service accounts. However, this service account is used in the OTA firmware update pipeline. roles/cloudbuild.builds.builder grants the ability to trigger new builds, including builds that can run arbitrary code and push to Cloud Storage. A compromised OTA pipeline SA could trigger a build that packages malicious firmware.",
     "why_misclassified": "EC-02: standard role flagged as LOW because Cloud Build builder is a typical CI/CD permission. The scanner does not evaluate the criticality of what the builds can output (OTA firmware to millions of vehicles).",
-    "detection_signal": "SA hyundai-ota-pipeline roles/cloudbuild.builds.builder \u2014 LOW: standard Cloud Build role",
-    "ground_truth": "Cloud Build builder role grants ability to trigger builds that push to the OTA artifact bucket. A compromised SA could trigger a build with a modified Dockerfile, push malicious firmware, and trigger OTA distribution to Hyundai vehicles. Scope should be restricted to a custom role that allows only reading from the source repo, not triggering new builds.",
+    "detection_signal": "SA automotive-ota-pipeline roles/cloudbuild.builds.builder \u2014 LOW: standard Cloud Build role",
+    "ground_truth": "Cloud Build builder role grants ability to trigger builds that push to the OTA artifact bucket. A compromised SA could trigger a build with a modified Dockerfile, push malicious firmware, and trigger OTA distribution to automotive vehicles. Scope should be restricted to a custom role that allows only reading from the source repo, not triggering new builds.",
     "remediation_impact": "Create custom role with only cloudbuild.builds.list and cloudbuild.builds.get. Separate the OTA pipeline into a read SA (reads build artifacts) and a trigger SA (protected with additional approval gate).",
     "confidence": 0.93
   },
@@ -3003,9 +3003,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "DynamoDB table hyundai-ephemeral-sessions has Point-in-Time Recovery (PITR) disabled. CSPM reports MEDIUM for production DynamoDB without backup. This table stores vehicle WebSocket session state for active connected vehicle sessions \u2014 each item has a 30-minute TTL. Sessions are ephemeral by design. If the table were corrupted, vehicles would simply re-establish sessions on reconnect. Historical session data has no value after expiry.",
+    "scenario": "DynamoDB table automotive-ephemeral-sessions has Point-in-Time Recovery (PITR) disabled. CSPM reports MEDIUM for production DynamoDB without backup. This table stores vehicle WebSocket session state for active connected vehicle sessions \u2014 each item has a 30-minute TTL. Sessions are ephemeral by design. If the table were corrupted, vehicles would simply re-establish sessions on reconnect. Historical session data has no value after expiry.",
     "why_misclassified": "EC-24: scanner applies PITR recommendation uniformly to all DynamoDB tables without distinguishing ephemeral session stores (where historical recovery has no value) from persistent data stores.",
-    "detection_signal": "DynamoDB hyundai-ephemeral-sessions PITR disabled \u2014 MEDIUM: connected vehicle session data without backup",
+    "detection_signal": "DynamoDB automotive-ephemeral-sessions PITR disabled \u2014 MEDIUM: connected vehicle session data without backup",
     "ground_truth": "Table contains only active vehicle sessions with 30-minute TTL. All items auto-expire. Recovery of 30-minute-old session data would not restore any useful state \u2014 vehicles reconnect and create new sessions automatically.",
     "remediation_impact": "Enabling PITR adds $0.20/GB/month for a table where no historical data is useful. Vehicle sessions are stateless by design \u2014 reconnection is the recovery mechanism.",
     "confidence": 0.93
@@ -3025,9 +3025,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure Application Gateway hyundai-connected-appgw WAF is in Detection mode, not Prevention mode. CSPM reports MEDIUM for WAF not actively blocking in automotive environment. The WAF was placed in Detection mode 6 weeks ago during a V2C API update that introduced new header patterns that triggered WAF rules. The team is reviewing false positive WAF alerts before switching to Prevention mode. Detection logs show only 2 legitimate alerts in 6 weeks and 847 false positives from the new V2C header format.",
+    "scenario": "Azure Application Gateway automotive-connected-appgw WAF is in Detection mode, not Prevention mode. CSPM reports MEDIUM for WAF not actively blocking in automotive environment. The WAF was placed in Detection mode 6 weeks ago during a V2C API update that introduced new header patterns that triggered WAF rules. The team is reviewing false positive WAF alerts before switching to Prevention mode. Detection logs show only 2 legitimate alerts in 6 weeks and 847 false positives from the new V2C header format.",
     "why_misclassified": "EC-47: WAF in Detection mode is a temporary operational state during tuning. Scanner flags the mode without context of the tuning process or the false positive volume that justified the mode.",
-    "detection_signal": "App Gateway hyundai-connected-appgw WAF in Detection mode \u2014 MEDIUM: WAF not blocking in automotive production",
+    "detection_signal": "App Gateway automotive-connected-appgw WAF in Detection mode \u2014 MEDIUM: WAF not blocking in automotive production",
     "ground_truth": "Detection mode is temporary (6-week tuning window). 847 false positives from new V2C API headers would cause production outages if Prevention mode were forced. Custom WAF exclusions being developed for the V2C header pattern. Prevention mode target: 2 weeks.",
     "remediation_impact": "Switching to Prevention mode now would block 847 legitimate V2C API requests per week, disrupting vehicle connectivity. Structured tuning with target Prevention mode date is the correct approach.",
     "confidence": 0.85
@@ -3047,9 +3047,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "BigQuery dataset kia-vehicle-analytics-public is accessible to allAuthenticatedUsers. CSPM reports HIGH for public BigQuery dataset. This dataset was intentionally created as a public automotive analytics dataset containing aggregated, anonymized vehicle performance metrics shared with university research partners studying EV battery degradation. The dataset contains no PII, no individual vehicle identifiers, and all data is aggregated at the model/region level. Access requires a valid Google account, not truly public.",
+    "scenario": "BigQuery dataset brand2-vehicle-analytics-public is accessible to allAuthenticatedUsers. CSPM reports HIGH for public BigQuery dataset. This dataset was intentionally created as a public automotive analytics dataset containing aggregated, anonymized vehicle performance metrics shared with university research partners studying EV battery degradation. The dataset contains no PII, no individual vehicle identifiers, and all data is aggregated at the model/region level. Access requires a valid Google account, not truly public.",
     "why_misclassified": "EC-16: scanner flags allAuthenticatedUsers as equivalent to fully public without evaluating whether the data is actually sensitive or whether the sharing is intentional research collaboration.",
-    "detection_signal": "BigQuery dataset kia-vehicle-analytics-public allAuthenticatedUsers access \u2014 HIGH: vehicle analytics data publicly accessible",
+    "detection_signal": "BigQuery dataset brand2-vehicle-analytics-public allAuthenticatedUsers access \u2014 HIGH: vehicle analytics data publicly accessible",
     "ground_truth": "Dataset contains only aggregated EV battery metrics (model, region, charge cycles) with k-anonymity applied (groups of 500+ vehicles). Intentionally shared with university research community. Contains no PII or vehicle identifiers by design.",
     "remediation_impact": "Restricting access to specific university Google accounts is good practice but the data itself is safe for public research use. Can be converted to specific domain allowlist if required.",
     "confidence": 0.88
@@ -3069,9 +3069,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Secrets Manager secret /hyundai/connected/mapbox-api-key has automatic rotation disabled. CSPM reports HIGH for non-rotating secret. The Mapbox API key is a third-party vendor key with an external rotation dependency \u2014 Mapbox does not provide a rotation API. Key rotation requires manual coordination with Mapbox (new key generation in Mapbox dashboard, update in Secrets Manager). Automatic rotation is architecturally impossible with Mapbox's current API.",
+    "scenario": "Secrets Manager secret /automotive/connected/mapbox-api-key has automatic rotation disabled. CSPM reports HIGH for non-rotating secret. The Mapbox API key is a third-party vendor key with an external rotation dependency \u2014 Mapbox does not provide a rotation API. Key rotation requires manual coordination with Mapbox (new key generation in Mapbox dashboard, update in Secrets Manager). Automatic rotation is architecturally impossible with Mapbox's current API.",
     "why_misclassified": "EC-55: scanner requires automatic rotation for all Secrets Manager secrets without evaluating whether the secret's source system supports programmatic rotation. Third-party API keys often cannot be automatically rotated.",
-    "detection_signal": "Secrets Manager /hyundai/connected/mapbox-api-key rotation disabled \u2014 HIGH: mapping API key without automatic rotation",
+    "detection_signal": "Secrets Manager /automotive/connected/mapbox-api-key rotation disabled \u2014 HIGH: mapping API key without automatic rotation",
     "ground_truth": "Mapbox API does not expose a key rotation endpoint. Automatic rotation is not technically possible. Manual rotation process documented in runbook with 90-day reminder. Last rotated 45 days ago.",
     "remediation_impact": "No technical solution available for automatic Mapbox key rotation. Consider migrating to a mapping provider with rotation API support (HERE Maps, Google Maps) in the next platform refresh.",
     "confidence": 0.87
@@ -3092,9 +3092,9 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Azure Storage account stKiaADASTrainingData has Shared Key authorization enabled. CSPM reports INFO because Shared Key is the default and the account has no public access. The storage account holds 2.7TB of raw ADAS training data including LiDAR point clouds of pedestrians, cyclists, and pedestrian behavior patterns at Kia's ADAS test facility. Storage access keys (which enable Shared Key auth) have full storage account access. If a storage access key were exposed, an attacker could exfiltrate all ADAS training data including personally-identifiable pedestrian behavior data.",
+    "scenario": "Azure Storage account stBrand2ADASTrainingData has Shared Key authorization enabled. CSPM reports INFO because Shared Key is the default and the account has no public access. The storage account holds 2.7TB of raw ADAS training data including LiDAR point clouds of pedestrians, cyclists, and pedestrian behavior patterns at Brand2 ADAS test facility. Storage access keys (which enable Shared Key auth) have full storage account access. If a storage access key were exposed, an attacker could exfiltrate all ADAS training data including personally-identifiable pedestrian behavior data.",
     "why_misclassified": "EC-22: Shared Key being the default causes it to be treated as an INFO baseline. The scanner doesn't evaluate the data sensitivity (TISAX-scoped ADAS training data with pedestrian PII components) or the breadth of access that storage access keys grant.",
-    "detection_signal": "Storage account stKiaADASTrainingData Shared Key authorization enabled \u2014 INFO: standard storage configuration",
+    "detection_signal": "Storage account stBrand2ADASTrainingData Shared Key authorization enabled \u2014 INFO: standard storage configuration",
     "ground_truth": "Shared Key access grants full storage account control. 2.7TB of ADAS data includes pedestrian location and behavior patterns classified as PII under GDPR/TISAX. Disabling Shared Key and requiring Azure AD would prevent key compromise from enabling full data exfiltration.",
     "remediation_impact": "Disable Shared Key authorization (allowSharedKeyAccess=false), migrate all access to Azure AD with Storage Blob Data Reader/Contributor roles on specific containers. TISAX AL2 requires access control based on identity, not shared keys.",
     "confidence": 0.91
@@ -3114,9 +3114,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP backend service hyundai-internal-adas-api does not have Cloud Armor policy attached. CSPM reports HIGH for internal backend service without DDoS protection. This backend service is an internal load balancer (scheme=INTERNAL) serving traffic only within the GCP VPC \u2014 it has no external IP and is unreachable from the internet. Cloud Armor is only applicable to external HTTP(S) load balancers, not internal load balancers.",
+    "scenario": "GCP backend service automotive-internal-adas-api does not have Cloud Armor policy attached. CSPM reports HIGH for internal backend service without DDoS protection. This backend service is an internal load balancer (scheme=INTERNAL) serving traffic only within the GCP VPC \u2014 it has no external IP and is unreachable from the internet. Cloud Armor is only applicable to external HTTP(S) load balancers, not internal load balancers.",
     "why_misclassified": "EC-11: scanner applies Cloud Armor check to all backend services regardless of load balancer scheme. Cloud Armor is technically incompatible with internal load balancers \u2014 it can only be attached to external HTTP(S) load balancers.",
-    "detection_signal": "Backend service hyundai-internal-adas-api no Cloud Armor policy \u2014 HIGH: ADAS API without DDoS protection",
+    "detection_signal": "Backend service automotive-internal-adas-api no Cloud Armor policy \u2014 HIGH: ADAS API without DDoS protection",
     "ground_truth": "Internal load balancer scheme (INTERNAL) cannot have Cloud Armor attached. Cloud Armor is an external edge security product. Internal backend services are protected by VPC network policies, not Cloud Armor. Finding is technically impossible to remediate as stated.",
     "remediation_impact": "Cloud Armor cannot be attached to internal load balancers. This finding requires CSPM rule suppression for internal backend services.",
     "confidence": 0.93
@@ -3136,9 +3136,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "AWS Config rule restricted-ssh reports EC2 instance hyundai-v2x-rsu as noncompliant (SSH allowed inbound). CSPM forwards this as HIGH compliance violation. The EC2 instance is the V2X roadside unit management interface that requires SSH access from the field engineering team to configure DSRC radio parameters. The SSH source is restricted to the field engineering VPN CIDR (172.16.50.0/28) in the security group rule. The Config rule restricted-ssh uses a blanket check for any inbound SSH without evaluating source restrictions.",
+    "scenario": "AWS Config rule restricted-ssh reports EC2 instance automotive-v2x-rsu as noncompliant (SSH allowed inbound). CSPM forwards this as HIGH compliance violation. The EC2 instance is the V2X roadside unit management interface that requires SSH access from the field engineering team to configure DSRC radio parameters. The SSH source is restricted to the field engineering VPN CIDR (172.16.50.0/28) in the security group rule. The Config rule restricted-ssh uses a blanket check for any inbound SSH without evaluating source restrictions.",
     "why_misclassified": "EC-30: Config rule restricted-ssh triggers on any security group with inbound TCP 22 regardless of source restriction. SSH from 172.16.50.0/28 (12 hosts) is meaningfully different from SSH from 0.0.0.0/0.",
-    "detection_signal": "Config rule restricted-ssh noncompliant hyundai-v2x-rsu \u2014 HIGH: V2X roadside unit SSH noncompliant",
+    "detection_signal": "Config rule restricted-ssh noncompliant automotive-v2x-rsu \u2014 HIGH: V2X roadside unit SSH noncompliant",
     "ground_truth": "SSH restricted to 172.16.50.0/28 (field engineering VPN, 12 hosts max). Config rule restricted-ssh is a coarse check for any inbound SSH. The specific CIDR restriction means this is a false trigger of the Config rule, not a policy violation.",
     "remediation_impact": "Deploy a custom Config rule that evaluates SSH source CIDRs (allowing specific /28 or /30 ranges while flagging /0 or /8 sources). Suppress this specific instance against the coarse restricted-ssh rule.",
     "confidence": 0.88
@@ -3158,7 +3158,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure Network Watcher is not enabled in australiasoutheast region for the Kia connected services subscription. CSPM reports MEDIUM for Network Watcher gap. Kia connected services operate exclusively in australiaeast and australiasoutheast regions. Network Watcher is enabled in australiaeast. The australiasoutheast region contains no VNets, no NICs, and no resources \u2014 it is an empty region in the subscription.",
+    "scenario": "Azure Network Watcher is not enabled in australiasoutheast region for the Brand2 connected services subscription. CSPM reports MEDIUM for Network Watcher gap. Brand2 connected services operate exclusively in australiaeast and australiasoutheast regions. Network Watcher is enabled in australiaeast. The australiasoutheast region contains no VNets, no NICs, and no resources \u2014 it is an empty region in the subscription.",
     "why_misclassified": "EC-37: scanner enumerates all Azure regions and checks for Network Watcher in each, regardless of whether resources exist in that region. An empty region has no network traffic to monitor.",
     "detection_signal": "Network Watcher not enabled in australiasoutheast \u2014 MEDIUM: network monitoring gap in automotive subscription",
     "ground_truth": "No Azure resources exist in australiasoutheast for this subscription. Network Watcher monitors network traffic for VNets and NICs \u2014 none exist in this region. Enabling Network Watcher in an empty region generates no data and incurs minimal but unnecessary cost.",
@@ -3180,9 +3180,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCS bucket hyundai-lidar-raw-temp has versioning disabled. CSPM reports MEDIUM for production bucket without versioning. This bucket is a pipeline staging bucket \u2014 LiDAR point clouds are uploaded, processed within 4 hours, and deleted. Objects in this bucket are transient processing artifacts with no long-term value. The bucket has a 24-hour lifecycle rule to delete objects. Versioning would retain deleted objects for 90 days, consuming massive storage for transient data with no recovery value.",
+    "scenario": "GCS bucket automotive-lidar-raw-temp has versioning disabled. CSPM reports MEDIUM for production bucket without versioning. This bucket is a pipeline staging bucket \u2014 LiDAR point clouds are uploaded, processed within 4 hours, and deleted. Objects in this bucket are transient processing artifacts with no long-term value. The bucket has a 24-hour lifecycle rule to delete objects. Versioning would retain deleted objects for 90 days, consuming massive storage for transient data with no recovery value.",
     "why_misclassified": "EC-18: versioning recommended for all production buckets without evaluating the transient nature of the data. Versioning of ephemeral pipeline staging data creates storage overhead with zero business value.",
-    "detection_signal": "GCS bucket hyundai-lidar-raw-temp versioning disabled \u2014 MEDIUM: production bucket without data versioning protection",
+    "detection_signal": "GCS bucket automotive-lidar-raw-temp versioning disabled \u2014 MEDIUM: production bucket without data versioning protection",
     "ground_truth": "Pipeline staging bucket with 24-hour lifecycle deletion. Objects are transient LiDAR processing inputs \u2014 no recovery value after processing. Versioning would retain deleted objects and multiply storage costs by 10-15x for data that has no recovery use case.",
     "remediation_impact": "Enabling versioning on this staging bucket would retain 90 days of deleted LiDAR files, estimated 15TB additional storage at significant cost. No business case for recovering processed-and-deleted pipeline inputs.",
     "confidence": 0.9
@@ -3202,7 +3202,7 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "AWS Inspector v2 is not enabled for EC2 and Lambda scanning in account hyundai-adas-prod. CSPM reports HIGH for missing vulnerability scanning. The account uses a third-party vulnerability management platform (Qualys) integrated via SSM. Qualys scans all EC2 instances with agent-based scanning (QCA), provides CVE correlation, and feeds the automotive security team's existing vulnerability workflow. Inspector would duplicate scanning and generate parallel alert queues.",
+    "scenario": "AWS Inspector v2 is not enabled for EC2 and Lambda scanning in account automotive-adas-prod. CSPM reports HIGH for missing vulnerability scanning. The account uses a third-party vulnerability management platform (Qualys) integrated via SSM. Qualys scans all EC2 instances with agent-based scanning (QCA), provides CVE correlation, and feeds the automotive security team's existing vulnerability workflow. Inspector would duplicate scanning and generate parallel alert queues.",
     "why_misclassified": "EC-44: scanner requires AWS-native Inspector without evaluating whether a third-party VM platform provides equivalent coverage. Qualys with SSM agent provides comprehensive vulnerability scanning compatible with ISO 21434 requirements.",
     "detection_signal": "AWS Inspector v2 not enabled \u2014 HIGH: automotive production account without vulnerability scanning",
     "ground_truth": "Qualys Cloud Agent on all EC2 instances provides continuous vulnerability scanning. Qualys is the enterprise vulnerability management platform feeding the automotive security program. Enabling Inspector would create duplicate findings requiring reconciliation.",
@@ -3225,9 +3225,9 @@
       "ISO-21434",
       "UNECE WP.29"
     ],
-    "scenario": "NSG hyundai-ota-subnet-nsg has outbound rule AllowInternetOutbound allowing all outbound traffic. CSPM reports INFO because outbound AllowInternet is the Azure default NSG rule. The subnet contains the OTA server that distributes firmware updates to 1.2M Hyundai vehicles. Unrestricted outbound access means the OTA server could be used as a pivot to exfiltrate data to arbitrary internet destinations if compromised, bypassing TISAX data loss controls.",
+    "scenario": "NSG automotive-ota-subnet-nsg has outbound rule AllowInternetOutbound allowing all outbound traffic. CSPM reports INFO because outbound AllowInternet is the Azure default NSG rule. The subnet contains the OTA server that distributes firmware updates to 1.2M automotive vehicles. Unrestricted outbound access means the OTA server could be used as a pivot to exfiltrate data to arbitrary internet destinations if compromised, bypassing TISAX data loss controls.",
     "why_misclassified": "EC-41: Azure's default outbound rule is treated as expected baseline with INFO severity. For OTA infrastructure under UNECE WP.29 cyber security requirements, unrestricted outbound from OTA servers represents a significant exfiltration risk if compromised.",
-    "detection_signal": "NSG hyundai-ota-subnet-nsg AllowInternetOutbound default rule \u2014 INFO: standard Azure outbound policy",
+    "detection_signal": "NSG automotive-ota-subnet-nsg AllowInternetOutbound default rule \u2014 INFO: standard Azure outbound policy",
     "ground_truth": "OTA server subnet needs outbound only to: vehicle CDN endpoints (specific IPs), internal artifact storage, and OTA signing service. Unrestricted outbound allows a compromised OTA server to contact attacker infrastructure, exfiltrate firmware signing keys, or download additional payloads.",
     "remediation_impact": "Add deny-all-outbound rule and explicit allow rules for known OTA CDN IPs, artifact storage (Private Endpoint), and signing service. Implement Azure Firewall for OTA subnet egress inspection per UNECE WP.29 network segmentation requirements.",
     "confidence": 0.92
@@ -3247,9 +3247,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Compute Engine instance kia-canbus-gateway has serial port access enabled. CSPM reports MEDIUM for serial port enabled on production automotive VM. This instance runs the CAN bus gateway software for manufacturing line integration. Serial port access is required by the Hyundai production IT team to perform out-of-band diagnostics on CAN bus timing issues without network access. Serial port access in GCP requires valid GCP IAM authentication (gcloud compute connect-to-serial-port) \u2014 it is not an unauthenticated access vector.",
+    "scenario": "Compute Engine instance brand2-canbus-gateway has serial port access enabled. CSPM reports MEDIUM for serial port enabled on production automotive VM. This instance runs the CAN bus gateway software for manufacturing line integration. Serial port access is required by the automotive production IT team to perform out-of-band diagnostics on CAN bus timing issues without network access. Serial port access in GCP requires valid GCP IAM authentication (gcloud compute connect-to-serial-port) \u2014 it is not an unauthenticated access vector.",
     "why_misclassified": "EC-26: serial port access in GCP requires IAM authentication via gcloud CLI. It is not a raw serial console \u2014 it is IAM-gated. Scanner flags serial port enabled as a risk without noting the IAM authentication requirement.",
-    "detection_signal": "Compute instance kia-canbus-gateway serial port enabled \u2014 MEDIUM: production automotive VM serial console accessible",
+    "detection_signal": "Compute instance brand2-canbus-gateway serial port enabled \u2014 MEDIUM: production automotive VM serial console accessible",
     "ground_truth": "GCP serial port access requires gcloud compute connect-to-serial-port with valid IAM credentials and roles/compute.instanceAdmin. The serial port is not an unauthenticated back door. Used for emergency CAN bus diagnostics by authorized production IT staff.",
     "remediation_impact": "Disabling serial port removes the only out-of-band diagnostic path for CAN bus timing issues. Would require physical access to the manufacturing floor server rack for equivalent diagnostics.",
     "confidence": 0.86
@@ -3269,9 +3269,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Route 53 hosted zone hyundai-internal.corp does not have DNSSEC enabled. CSPM reports MEDIUM for DNS without validation. hyundai-internal.corp is a private hosted zone (associated with the internal VPC only, not resolvable from internet). DNSSEC is designed to protect against DNS spoofing on the public internet. Private hosted zones are only resolvable within the VPC and are not exposed to the public DNS namespace where DNSSEC attacks occur.",
+    "scenario": "Route 53 hosted zone automotive-internal.corp does not have DNSSEC enabled. CSPM reports MEDIUM for DNS without validation. automotive-internal.corp is a private hosted zone (associated with the internal VPC only, not resolvable from internet). DNSSEC is designed to protect against DNS spoofing on the public internet. Private hosted zones are only resolvable within the VPC and are not exposed to the public DNS namespace where DNSSEC attacks occur.",
     "why_misclassified": "EC-48: DNSSEC check applied uniformly to all hosted zones regardless of public/private classification. DNSSEC protects public-facing DNS. Private hosted zones accessible only within a VPC have no attack surface that DNSSEC addresses.",
-    "detection_signal": "Route 53 hosted zone hyundai-internal.corp DNSSEC disabled \u2014 MEDIUM: automotive corporate DNS without validation",
+    "detection_signal": "Route 53 hosted zone automotive-internal.corp DNSSEC disabled \u2014 MEDIUM: automotive corporate DNS without validation",
     "ground_truth": "Private hosted zone only. DNS queries resolved within VPC only, not exposed to internet. DNSSEC protects against internet-based cache poisoning attacks. No such attack vector exists for a VPC-internal private zone.",
     "remediation_impact": "DNSSEC for Route 53 private zones has limited tooling support and Route 53 does not officially support DNSSEC for private hosted zones. This is an inapplicable recommendation.",
     "confidence": 0.92
@@ -3291,9 +3291,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "Azure Function App kia-battery-telemetry-fn runs on .NET 6.0 which reached Microsoft end-of-life in November 2024. CSPM reports HIGH for deprecated runtime on battery telemetry function. The function processes HV battery thermal data from 890K Kia EVs. Runtime upgrade to .NET 8.0 is blocked by the Kia EV battery management ISV (Dukosi) which certifies the telemetry processing library only for .NET 6.0. The ISV certification for .NET 8.0 is in progress with estimated completion Q2 2025.",
+    "scenario": "Azure Function App brand2-battery-telemetry-fn runs on .NET 6.0 which reached Microsoft end-of-life in November 2024. CSPM reports HIGH for deprecated runtime on battery telemetry function. The function processes HV battery thermal data from 890K Brand2 EVs. Runtime upgrade to .NET 8.0 is blocked by the Brand2 EV battery management ISV (Dukosi) which certifies the telemetry processing library only for .NET 6.0. The ISV certification for .NET 8.0 is in progress with estimated completion Q2 2025.",
     "why_misclassified": "EC-54: deprecated runtime is a real risk, but HIGH severity doesn't account for the ISV certification constraint that legitimately blocks upgrade. The risk is MEDIUM, not HIGH, given the active upgrade path and the non-internet-facing nature of the function.",
-    "detection_signal": "Function App kia-battery-telemetry-fn .NET 6.0 deprecated \u2014 HIGH: EV battery telemetry on end-of-life runtime",
+    "detection_signal": "Function App brand2-battery-telemetry-fn .NET 6.0 deprecated \u2014 HIGH: EV battery telemetry on end-of-life runtime",
     "ground_truth": ".NET 6.0 EOL means no further security patches from Microsoft. ISV certification blocks upgrade until Q2 2025. Function is not internet-facing (triggered by Event Hub). Severity is MEDIUM \u2014 real risk with documented upgrade path, not negligence.",
     "remediation_impact": "Upgrade blocked by ISV certification. Interim mitigations: isolate Function App in dedicated App Service Plan, enable Defender for App Service enhanced monitoring, track ISV certification progress.",
     "confidence": 0.83
@@ -3313,9 +3313,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "GCP project kia-adas-prod has clouddebugger.googleapis.com API enabled. CSPM reports MEDIUM for Cloud Debugger API enabled in automotive production (deprecated API, potential debugging exposure). Cloud Debugger was deprecated by Google and the API is no longer functional \u2014 Google disabled all Cloud Debugger backends in 2023. The API appears enabled in the project's API list as a legacy entry but the service is non-functional.",
+    "scenario": "GCP project brand2-adas-prod has clouddebugger.googleapis.com API enabled. CSPM reports MEDIUM for Cloud Debugger API enabled in automotive production (deprecated API, potential debugging exposure). Cloud Debugger was deprecated by Google and the API is no longer functional \u2014 Google disabled all Cloud Debugger backends in 2023. The API appears enabled in the project's API list as a legacy entry but the service is non-functional.",
     "why_misclassified": "EC-07: scanner checks API enablement list without verifying whether the API is still operational. Cloud Debugger APIs are enabled in many legacy projects but the backend was shut down by Google, making the API effectively inert.",
-    "detection_signal": "Project kia-adas-prod clouddebugger API enabled \u2014 MEDIUM: debugging API enabled in automotive production",
+    "detection_signal": "Project brand2-adas-prod clouddebugger API enabled \u2014 MEDIUM: debugging API enabled in automotive production",
     "ground_truth": "Cloud Debugger service was shut down by Google (May 2023). Enabling or disabling the API has no effect as the backend is defunct. No debugging access is possible through this API regardless of enablement state.",
     "remediation_impact": "Disabling the API is correct hygiene cleanup but the security finding is invalid \u2014 the backend doesn't exist. Run gcloud services disable clouddebugger.googleapis.com as housekeeping.",
     "confidence": 0.9
@@ -3335,9 +3335,9 @@
     "compliance_frameworks": [
       "ISO-21434"
     ],
-    "scenario": "ElastiCache cluster hyundai-adas-feature-store has in-transit encryption disabled. CSPM reports HIGH for unencrypted cache on ADAS feature store. The ElastiCache cluster runs in a dedicated VPC subnet with security group allowing inbound TCP 6379 only from the ADAS inference EKS node security group. The cluster is within the same VPC as the EKS nodes, so traffic never leaves the AWS network fabric. Application data is feature vectors (floating point arrays) for ML inference \u2014 not PII or vehicle commands.",
+    "scenario": "ElastiCache cluster automotive-adas-feature-store has in-transit encryption disabled. CSPM reports HIGH for unencrypted cache on ADAS feature store. The ElastiCache cluster runs in a dedicated VPC subnet with security group allowing inbound TCP 6379 only from the ADAS inference EKS node security group. The cluster is within the same VPC as the EKS nodes, so traffic never leaves the AWS network fabric. Application data is feature vectors (floating point arrays) for ML inference \u2014 not PII or vehicle commands.",
     "why_misclassified": "EC-35: in-transit encryption recommended for all caches without evaluating VPC network containment and data sensitivity. Feature vectors for ML inference on a VPC-internal cluster have minimal exposure if intercepted within the same AWS network fabric.",
-    "detection_signal": "ElastiCache hyundai-adas-feature-store in-transit encryption disabled \u2014 HIGH: ADAS feature store unencrypted",
+    "detection_signal": "ElastiCache automotive-adas-feature-store in-transit encryption disabled \u2014 HIGH: ADAS feature store unencrypted",
     "ground_truth": "Cluster in dedicated VPC subnet, access restricted to ADAS EKS node security group. Traffic between EKS nodes and ElastiCache stays within AWS network. Feature vectors are ML intermediate data, not PII. Risk is LOW, not HIGH. Enable TLS for defense-in-depth.",
     "remediation_impact": "Enabling TLS requires ElastiCache cluster replacement (cannot enable TLS on existing cluster). Replacement requires ADAS inference service downtime and cache warm-up period of 2-4 hours.",
     "confidence": 0.86
@@ -3358,7 +3358,7 @@
       "ISO-21434",
       "TISAX"
     ],
-    "scenario": "Azure Conditional Access policy Require-MFA-Admin targets the 'Administrators' named location exclusion for break-glass accounts. CSPM reports INFO because the CA policy exists and is enabled. The policy excludes break-glass accounts from MFA requirement \u2014 standard practice. However, the break-glass account hyundai-emergency-admin@hyundai.com is also a member of the Global Administrator role (not just excluded from MFA). An attacker who obtains the break-glass credentials has Global Admin access with no MFA requirement, no TISAX AL3 access control, and unlimited subscription access.",
+    "scenario": "Azure Conditional Access policy Require-MFA-Admin targets the 'Administrators' named location exclusion for break-glass accounts. CSPM reports INFO because the CA policy exists and is enabled. The policy excludes break-glass accounts from MFA requirement \u2014 standard practice. However, the break-glass account acmecorp-emergency-admin@acmecorp.com is also a member of the Global Administrator role (not just excluded from MFA). An attacker who obtains the break-glass credentials has Global Admin access with no MFA requirement, no TISAX AL3 access control, and unlimited subscription access.",
     "why_misclassified": "EC-50: scanner validates that the CA policy is enabled and structured correctly (break-glass exclusion is standard). It does not check whether break-glass accounts have excessive role assignments that compound the exclusion risk.",
     "detection_signal": "Conditional Access Require-MFA-Admin enabled with break-glass exclusion \u2014 INFO: standard CA policy configuration",
     "ground_truth": "Break-glass account has Global Administrator role. Exclusion from MFA + Global Admin = unlimited Azure access with only a password required. Break-glass should have limited, time-bound emergency permissions, not Global Admin. This creates a credential compromise scenario with catastrophic blast radius including OTA infrastructure.",
