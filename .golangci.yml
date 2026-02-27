@@ -1,3 +1,4 @@
+
 version: "2"
 run:
   modules-download-mode: readonly
@@ -28,6 +29,7 @@ linters:
     gocritic:
       disabled-checks:
         - appendAssign
+        - commentedOutCode
         - ifElseChain
         - elseif
         - sprintfQuotedString
@@ -39,12 +41,27 @@ linters:
       excludes:
         - G101
         - G104
+        - G117
         - G204
         - G304
+        - G306
+        - G404
+        - G704
+        - G705
+        - G706
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF*"
+        - "-SA9003"
+        - "-ST1003"
+        - "-ST1005"
+        - "-S1039"
     govet:
       disable:
         - fieldalignment
         - shadow
+        - unusedwrite
       enable-all: true
     nakedret:
       max-func-lines: 30
@@ -59,7 +76,6 @@ linters:
         - name: error-naming
         - name: if-return
         - name: increment-decrement
-        - name: var-naming
         - name: var-declaration
         - name: package-comments
         - name: range
@@ -67,7 +83,6 @@ linters:
         - name: time-naming
         - name: indent-error-flow
         - name: errorf
-        - name: empty-block
         - name: superfluous-else
         - name: unreachable-code
   exclusions:

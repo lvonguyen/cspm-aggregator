@@ -347,6 +347,8 @@ func CalculateTrends(findings []Finding, previousTotal int, period string) Trend
 			totalMTTR += float64(f.DaysOpen)
 		case DeltaReopened:
 			metrics.ReopenedFindings++
+		case DeltaExisting:
+			// Existing findings are counted in TotalFindings below
 		}
 
 		// Count active findings

@@ -113,8 +113,8 @@ func run(ctx context.Context, logger *zap.Logger, cfg *config.Config, cloudFilte
 		findings, err := queryProvider(ctx, p)
 		if err != nil {
 			logger.Error("Failed to query provider",
-			zap.String("provider", p.Name()),
-			zap.Error(err),
+				zap.String("provider", p.Name()),
+				zap.Error(err),
 			)
 			continue // Continue with other providers
 		}

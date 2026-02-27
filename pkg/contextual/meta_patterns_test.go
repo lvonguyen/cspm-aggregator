@@ -13,12 +13,12 @@ func TestExploitProbabilityDampener_AllConditionsMet(t *testing.T) {
 	d := NewExploitProbabilityDampener(nil, nil)
 
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001, // below threshold
-		InKEV:           false,
+		EPSSScore:        0.001, // below threshold
+		InKEV:            false,
 		ExploitAvailable: false,
-		ExploitInWild:   false,
-		EnvType:         "dev",
-		InternetFacing:  false,
+		ExploitInWild:    false,
+		EnvType:          "dev",
+		InternetFacing:   false,
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2023-99999", "HIGH")
@@ -45,11 +45,11 @@ func TestExploitProbabilityDampener_TwoConditionsMet_NoAutoApply(t *testing.T) {
 
 	// Only EPSS low + not in KEV — exploit available (condition 3 fails)
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001,
-		InKEV:           false,
+		EPSSScore:        0.001,
+		InKEV:            false,
 		ExploitAvailable: true, // condition 3 fails
-		ExploitInWild:   false,
-		EnvType:         "dev",
+		ExploitInWild:    false,
+		EnvType:          "dev",
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2023-99999", "HIGH")
@@ -72,13 +72,13 @@ func TestExploitProbabilityDampener_Guardrail_CriticalProdInternetFacing(t *test
 	d := NewExploitProbabilityDampener(nil, nil)
 
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001,
-		InKEV:           false,
+		EPSSScore:        0.001,
+		InKEV:            false,
 		ExploitAvailable: false,
-		ExploitInWild:   false,
-		EnvType:         "prod",         // prod
-		AssetTier:       "Tier1-Prod",
-		InternetFacing:  true,           // internet-facing
+		ExploitInWild:    false,
+		EnvType:          "prod", // prod
+		AssetTier:        "Tier1-Prod",
+		InternetFacing:   true, // internet-facing
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2023-99999", "CRITICAL")
@@ -119,11 +119,11 @@ func TestExploitProbabilityDampener_InKEV_PreventsDampening(t *testing.T) {
 
 	// EPSS low + exploit unproven, but IN KEV (condition 2 fails)
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001,
-		InKEV:           true, // in KEV — condition 2 fails
+		EPSSScore:        0.001,
+		InKEV:            true, // in KEV — condition 2 fails
 		ExploitAvailable: false,
-		ExploitInWild:   false,
-		EnvType:         "dev",
+		ExploitInWild:    false,
+		EnvType:          "dev",
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2021-44228", "HIGH")
@@ -142,12 +142,12 @@ func TestExploitProbabilityDampener_HighEPSS_ZeroConditions(t *testing.T) {
 
 	// High EPSS + in KEV + exploit available = 0 conditions met
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.97,  // high EPSS — condition 1 fails
-		InKEV:           true,  // in KEV — condition 2 fails
+		EPSSScore:        0.97, // high EPSS — condition 1 fails
+		InKEV:            true, // in KEV — condition 2 fails
 		ExploitAvailable: true, // exploit available — condition 3 fails
-		ExploitInWild:   true,
-		EnvType:         "prod",
-		InternetFacing:  true,
+		ExploitInWild:    true,
+		EnvType:          "prod",
+		InternetFacing:   true,
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2021-44228", "CRITICAL")
@@ -171,12 +171,12 @@ func TestExploitProbabilityDampener_SeverityDowngrade_FromCritical(t *testing.T)
 
 	// CRITICAL in non-prod, all conditions met → CRITICAL downgraded 2 levels to MEDIUM
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001,
-		InKEV:           false,
+		EPSSScore:        0.001,
+		InKEV:            false,
 		ExploitAvailable: false,
-		ExploitInWild:   false,
-		EnvType:         "dev",
-		InternetFacing:  false,
+		ExploitInWild:    false,
+		EnvType:          "dev",
+		InternetFacing:   false,
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2023-00001", "CRITICAL")
@@ -197,11 +197,11 @@ func TestExploitProbabilityDampener_SeverityDowngrade_FromLow(t *testing.T) {
 
 	// LOW downgraded 2 levels → clamped at INFORMATIONAL
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001,
-		InKEV:           false,
+		EPSSScore:        0.001,
+		InKEV:            false,
 		ExploitAvailable: false,
-		ExploitInWild:   false,
-		EnvType:         "dev",
+		ExploitInWild:    false,
+		EnvType:          "dev",
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2023-00002", "LOW")
@@ -246,13 +246,13 @@ func TestExploitProbabilityDampener_Guardrail_CriticalProdNotInternetFacing(t *t
 
 	// CRITICAL + prod, but NOT internet-facing — guardrail should NOT trigger
 	ctx := scoring.FindingContext{
-		EPSSScore:       0.001,
-		InKEV:           false,
+		EPSSScore:        0.001,
+		InKEV:            false,
 		ExploitAvailable: false,
-		ExploitInWild:   false,
-		EnvType:         "prod",
-		AssetTier:       "Tier1-Prod",
-		InternetFacing:  false, // not internet-facing
+		ExploitInWild:    false,
+		EnvType:          "prod",
+		AssetTier:        "Tier1-Prod",
+		InternetFacing:   false, // not internet-facing
 	}
 
 	adj, err := d.Evaluate(ctx, "CVE-2023-00003", "CRITICAL")

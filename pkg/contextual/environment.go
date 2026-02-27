@@ -29,16 +29,17 @@ func (e EnvironmentTier) String() string {
 		return "dev"
 	case Sandbox:
 		return "sandbox"
-	default:
+	case Unknown:
 		return "unknown"
 	}
+	return "unknown"
 }
 
 // SeverityMultiplier returns the severity adjustment multiplier for this tier.
 // Prod and Unknown keep severity unchanged (1.0x). Lower environments reduce it.
 func (e EnvironmentTier) SeverityMultiplier() float64 {
 	switch e {
-	case Prod:
+	case Prod, Unknown:
 		return 1.0
 	case Staging:
 		return 0.8
@@ -46,9 +47,8 @@ func (e EnvironmentTier) SeverityMultiplier() float64 {
 		return 0.5
 	case Sandbox:
 		return 0.3
-	default: // Unknown — treat conservatively as prod
-		return 1.0
 	}
+	return 1.0
 }
 
 // compiled regexes for environment detection (case-insensitive matching applied at call site)

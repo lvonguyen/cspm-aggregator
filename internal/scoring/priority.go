@@ -236,7 +236,7 @@ func (pm *PriorityMatrix) calculatePriority(severity string, tier ComplexityTier
 		case Tier2:
 			priority = P2
 			rationale = "HIGH severity with medium complexity - schedule for next maintenance window"
-		default:
+		case Tier3:
 			priority = P3
 			rationale = "HIGH severity but high complexity requires change management process"
 		}
@@ -324,6 +324,8 @@ func (pm *PriorityMatrix) calculatePriorityScore(result *PrioritizedFinding) int
 		score += 20
 	case Tier2:
 		score += 10
+	case Tier3:
+		// High complexity — no score bonus
 	}
 
 	// Adjust for auto-remediation readiness
@@ -375,10 +377,10 @@ func (pm *PriorityMatrix) isAutoRemediationReady(result *PrioritizedFinding) boo
 		return pm.config.AutoRemediateP1Tier1
 	case P2:
 		return pm.config.AutoRemediateP2Tier1
-	default:
-		// Lower priorities can be batched
+	case P3, P4, P5:
 		return true
 	}
+	return true
 }
 
 // setActionRecommendations sets the recommended actions based on assessment.
@@ -390,7 +392,7 @@ func (pm *PriorityMatrix) setActionRecommendations(result *PrioritizedFinding) {
 			result.RecommendedTimeline = "immediate"
 		case P2:
 			result.RecommendedTimeline = "next_maintenance_window"
-		default:
+		case P3, P4, P5:
 			result.RecommendedTimeline = "batch_queue"
 		}
 		return
@@ -507,6 +509,8 @@ func priorityToInt(p Priority) int {
 
 func escalatePriority(p Priority) Priority {
 	switch p {
+	case P1:
+		return P1
 	case P2:
 		return P1
 	case P3:
@@ -515,9 +519,8 @@ func escalatePriority(p Priority) Priority {
 		return P3
 	case P5:
 		return P4
-	default:
-		return p
 	}
+	return p
 }
 
 // QueueSummary provides aggregate statistics by queue.

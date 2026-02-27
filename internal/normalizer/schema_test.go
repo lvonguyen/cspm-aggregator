@@ -42,7 +42,7 @@ func TestNormalizeAWSFinding_FullASFF(t *testing.T) {
 		},
 		"GeneratorId": "aws-foundational-security-best-practices/v/1.0.0/S3.1",
 		"ProductFields": map[string]interface{}{
-			"ControlId":   "S3.1",
+			"ControlId":    "S3.1",
 			"StandardsArn": "arn:aws:securityhub:us-east-1::standards/aws-foundational-security-best-practices/v/1.0.0",
 		},
 		"Remediation": map[string]interface{}{
@@ -304,9 +304,9 @@ func TestNormalizeAzureFinding_FullAssessment(t *testing.T) {
 		"resourceId":     "/subscriptions/sub-abc-001/resourceGroups/rg-test/providers/Microsoft.Storage/storageAccounts/mystorage",
 		"resourceType":   "Microsoft.Storage/storageAccounts",
 		"metadata": map[string]interface{}{
-			"description":          "Storage accounts should use HTTPS only.",
+			"description":            "Storage accounts should use HTTPS only.",
 			"remediationDescription": "Enable secure transfer required.",
-			"policyDefinitionId":   "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9",
+			"policyDefinitionId":     "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9",
 		},
 		"status": map[string]interface{}{
 			"firstEvaluationDate": "2024-01-10T08:00:00Z",
@@ -560,7 +560,7 @@ func TestNormalizeGCPFinding_StateMapping(t *testing.T) {
 	}{
 		{"ACTIVE", "", "ACTIVE"},
 		{"INACTIVE", "", "RESOLVED"},
-		{"", "", "ACTIVE"},  // unknown defaults to ACTIVE
+		{"", "", "ACTIVE"}, // unknown defaults to ACTIVE
 		{"ACTIVE", "MUTED", "SUPPRESSED"},
 	}
 
@@ -617,8 +617,8 @@ func TestNormalizeGCPFinding_AIWorkload_VertexAI(t *testing.T) {
 	n := newNormalizer()
 
 	raw := map[string]interface{}{
-		"state":     "ACTIVE",
-		"vertexAi":  map[string]interface{}{"model": "gemini-pro"},
+		"state":    "ACTIVE",
+		"vertexAi": map[string]interface{}{"model": "gemini-pro"},
 	}
 
 	f := n.NormalizeGCPFinding(raw)
@@ -655,12 +655,12 @@ func TestEnrichFinding_SetsOrganizationalMetadata(t *testing.T) {
 	n := newNormalizer()
 
 	f := &Finding{
-		CSP:       "aws",
-		AccountID: "123456789012",
-		ControlID: "S3.1",
+		CSP:        "aws",
+		AccountID:  "123456789012",
+		ControlID:  "S3.1",
 		ResourceID: "arn:aws:s3:::my-bucket",
-		Status:    "ACTIVE",
-		Severity:  "HIGH",
+		Status:     "ACTIVE",
+		Severity:   "HIGH",
 	}
 
 	n.EnrichFinding(f)

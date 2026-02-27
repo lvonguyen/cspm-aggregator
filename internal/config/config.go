@@ -45,10 +45,10 @@ type AzureProviderConfig struct {
 
 // GCPProviderConfig holds GCP-specific settings.
 type GCPProviderConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	UseWIF        bool   `yaml:"use_wif"`
+	Enabled        bool   `yaml:"enabled"`
+	UseWIF         bool   `yaml:"use_wif"`
 	OrganizationID string `yaml:"organization_id"`
-	WIFConfigPath string `yaml:"wif_config_path"`
+	WIFConfigPath  string `yaml:"wif_config_path"`
 }
 
 // FilterConfig defines which findings to include.
@@ -66,9 +66,9 @@ type AsanaConfig struct {
 
 // EmailConfig holds email notification settings.
 type EmailConfig struct {
-	Enabled    bool              `yaml:"enabled"`
-	Sender     string            `yaml:"sender"`
-	Recipients EmailRecipients   `yaml:"recipients"`
+	Enabled    bool            `yaml:"enabled"`
+	Sender     string          `yaml:"sender"`
+	Recipients EmailRecipients `yaml:"recipients"`
 }
 
 // EmailRecipients maps team names to email addresses.
