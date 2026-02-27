@@ -117,8 +117,8 @@ func (d *ExploitProbabilityDampener) Evaluate(finding scoring.FindingContext, cv
 		epssScore = finding.EPSSScore
 		epssConditionMet = finding.EPSSScore < d.EPSSThreshold
 	} else {
-		// No EPSS data available — treat condition as met (conservative dampening)
-		epssConditionMet = true
+		// No EPSS data available — do NOT dampen without evidence
+		epssConditionMet = false
 	}
 
 	// Condition 2: NOT in CISA KEV

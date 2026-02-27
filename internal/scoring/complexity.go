@@ -352,8 +352,13 @@ Tier guidelines:
 		return nil, err
 	}
 
+	tier := ComplexityTier(parsed.Tier)
+	if tier < Tier1 || tier > Tier3 {
+		tier = Tier3 // default to highest complexity when LLM returns invalid value
+	}
+
 	return &ComplexityAssessment{
-		Tier:                 ComplexityTier(parsed.Tier),
+		Tier:                 tier,
 		AutomationCandidate:  parsed.AutomationCandidate,
 		AutomationBlockers:   parsed.AutomationBlockers,
 		RequiresAppTeam:      parsed.RequiresAppTeam,

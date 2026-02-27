@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -177,7 +178,8 @@ func (rs *RiskScorer) ScoreFinding(ctx context.Context, finding *Finding) (*Risk
 	// Step 1: Enrich context if not already populated
 	if finding.Context.AssetTier == "" {
 		if err := rs.enricher.EnrichContext(ctx, finding); err != nil {
-			// Log but continue with limited context
+			slog.Warn("context enrichment failed, continuing with limited context",
+				"finding_id", finding.ID, "error", err)
 		}
 	}
 
@@ -449,6 +451,15 @@ func NewRiskScorerPromptBuilder() *RiskScorerPromptBuilder {
 func (pb *RiskScorerPromptBuilder) BuildPrompt(finding *Finding) string {
 	ctx := finding.Context
 
+	sanitize := func(s string) string {
+		s = strings.ReplaceAll(s, "```", "")
+		s = strings.ReplaceAll(s, "## ", "")
+		if len(s) > 500 {
+			s = s[:500]
+		}
+		return s
+	}
+
 	prompt := fmt.Sprintf(`You are a security risk analyst. Assess this finding and provide contextual risk adjustment.
 
 ## Finding
@@ -481,13 +492,13 @@ func (pb *RiskScorerPromptBuilder) BuildPrompt(finding *Finding) string {
 - MFA Required: %t
 - Private Endpoint: %t
 `,
-		finding.ID,
-		finding.FindingType,
-		finding.Title,
-		finding.Severity,
-		finding.ResourceID,
-		finding.ResourceType,
-		finding.AccountID,
+		sanitize(finding.ID),
+		sanitize(finding.FindingType),
+		sanitize(finding.Title),
+		sanitize(finding.Severity),
+		sanitize(finding.ResourceID),
+		sanitize(finding.ResourceType),
+		sanitize(finding.AccountID),
 		finding.DaysOpen,
 		ctx.AssetTier,
 		ctx.EnvType,

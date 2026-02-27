@@ -10,22 +10,22 @@ import (
 )
 
 const (
-	kevCatalogURL      = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
-	kevDefaultRefresh  = 24 * time.Hour
+	kevCatalogURL     = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+	kevDefaultRefresh = 24 * time.Hour
 )
 
 // KEVVulnerability represents a single entry in the CISA KEV catalog.
 type KEVVulnerability struct {
-	CVEID          string `json:"cveID"`
-	VendorProject  string `json:"vendorProject"`
-	Product        string `json:"product"`
-	VulnerabilityName string `json:"vulnerabilityName"`
-	DateAdded      string `json:"dateAdded"`
-	ShortDescription string `json:"shortDescription"`
-	RequiredAction string `json:"requiredAction"`
-	DueDate        string `json:"dueDate"`
+	CVEID                      string `json:"cveID"`
+	VendorProject              string `json:"vendorProject"`
+	Product                    string `json:"product"`
+	VulnerabilityName          string `json:"vulnerabilityName"`
+	DateAdded                  string `json:"dateAdded"`
+	ShortDescription           string `json:"shortDescription"`
+	RequiredAction             string `json:"requiredAction"`
+	DueDate                    string `json:"dueDate"`
 	KnownRansomwareCampaignUse string `json:"knownRansomwareCampaignUse"`
-	Notes          string `json:"notes"`
+	Notes                      string `json:"notes"`
 }
 
 // kevCatalogResponse is the top-level JSON from the CISA KEV feed.
@@ -80,7 +80,7 @@ func (k *KEVCatalog) LoadCatalog() error {
 		return fmt.Errorf("KEV catalog returned status %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 50<<20)) // 50 MB cap
 	if err != nil {
 		return fmt.Errorf("reading KEV catalog body: %w", err)
 	}

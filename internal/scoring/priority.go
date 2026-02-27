@@ -20,6 +20,15 @@ const (
 	P5 Priority = "P5" // Low risk + Tier2/3 → Backlog
 )
 
+// priorityRank maps Priority to a numeric value for safe comparison.
+// Lower rank = higher urgency (P1=1, P5=5).
+var priorityRank = map[Priority]int{P1: 1, P2: 2, P3: 3, P4: 4, P5: 5}
+
+// LowerThan returns true if p is lower priority (less urgent) than other.
+func (p Priority) LowerThan(other Priority) bool {
+	return priorityRank[p] > priorityRank[other]
+}
+
 // PriorityConfig holds configuration for priority calculation.
 type PriorityConfig struct {
 	// AutoRemediateP1Tier1 automatically triggers remediation for P1 + Tier1
@@ -51,9 +60,9 @@ func DefaultPriorityConfig() PriorityConfig {
 
 // PriorityMatrix combines risk and complexity assessments into prioritized findings.
 type PriorityMatrix struct {
-	riskScorer   *RiskScorer
-	complexity   *ComplexityNormalizer
-	config       PriorityConfig
+	riskScorer *RiskScorer
+	complexity *ComplexityNormalizer
+	config     PriorityConfig
 }
 
 // NewPriorityMatrix creates a new priority matrix service.
@@ -81,25 +90,25 @@ type PrioritizedFinding struct {
 	ComplexityAssessment *ComplexityAssessment `json:"complexity_assessment"`
 
 	// Final priority
-	Priority           Priority `json:"priority"`
-	PriorityScore      int      `json:"priority_score"`       // 1-100 for sorting within priority
-	PriorityRationale  string   `json:"priority_rationale"`
+	Priority          Priority `json:"priority"`
+	PriorityScore     int      `json:"priority_score"` // 1-100 for sorting within priority
+	PriorityRationale string   `json:"priority_rationale"`
 
 	// Action recommendations
-	AutoRemediationReady   bool     `json:"auto_remediation_ready"`
-	RecommendedAction      string   `json:"recommended_action"`
-	RecommendedTimeline    string   `json:"recommended_timeline"`
-	EscalationReasons      []string `json:"escalation_reasons,omitempty"`
+	AutoRemediationReady bool     `json:"auto_remediation_ready"`
+	RecommendedAction    string   `json:"recommended_action"`
+	RecommendedTimeline  string   `json:"recommended_timeline"`
+	EscalationReasons    []string `json:"escalation_reasons,omitempty"`
 
 	// SLA tracking
-	SLADeadline    time.Time `json:"sla_deadline"`
-	SLAStatus      string    `json:"sla_status"`      // on_track, at_risk, overdue
-	DaysUntilSLA   int       `json:"days_until_sla"`
+	SLADeadline  time.Time `json:"sla_deadline"`
+	SLAStatus    string    `json:"sla_status"` // on_track, at_risk, overdue
+	DaysUntilSLA int       `json:"days_until_sla"`
 
 	// Workflow routing
-	AssignedQueue     string `json:"assigned_queue"`      // auto_remediation, security_review, app_team, change_board
-	RequiresApproval  bool   `json:"requires_approval"`
-	ApprovalLevel     string `json:"approval_level,omitempty"` // security_analyst, security_admin, ciso
+	AssignedQueue    string `json:"assigned_queue"` // auto_remediation, security_review, app_team, change_board
+	RequiresApproval bool   `json:"requires_approval"`
+	ApprovalLevel    string `json:"approval_level,omitempty"` // security_analyst, security_admin, ciso
 
 	// Metadata
 	AssessedAt time.Time `json:"assessed_at"`
@@ -195,15 +204,15 @@ func (pm *PriorityMatrix) PrioritizeFindings(ctx context.Context, findings []*Fi
 // calculatePriority determines priority from risk severity and complexity tier.
 func (pm *PriorityMatrix) calculatePriority(severity string, tier ComplexityTier, _ *Finding) (Priority, string) {
 	/*
-	Priority Matrix:
-	
-	                 | Tier 1 (Low)  | Tier 2 (Med)  | Tier 3 (High) |
-	-----------------|---------------|---------------|---------------|
-	CRITICAL         | P1            | P1            | P2            |
-	HIGH             | P1            | P2            | P3            |
-	MEDIUM           | P3            | P4            | P4            |
-	LOW              | P4            | P5            | P5            |
-	INFORMATIONAL    | P5            | P5            | P5            |
+		Priority Matrix:
+
+		                 | Tier 1 (Low)  | Tier 2 (Med)  | Tier 3 (High) |
+		-----------------|---------------|---------------|---------------|
+		CRITICAL         | P1            | P1            | P2            |
+		HIGH             | P1            | P2            | P3            |
+		MEDIUM           | P3            | P4            | P4            |
+		LOW              | P4            | P5            | P5            |
+		INFORMATIONAL    | P5            | P5            | P5            |
 	*/
 
 	var priority Priority
@@ -268,7 +277,7 @@ func (pm *PriorityMatrix) applyEscalations(
 
 	// Production environment escalation
 	if pm.config.ProdEnvironmentEscalation && finding.Context.EnvType == "prod" {
-		if result.Priority > P1 {
+		if result.Priority.LowerThan(P1) {
 			result.Priority = escalatePriority(result.Priority)
 			reasons = append(reasons, "Production environment")
 		}
@@ -277,7 +286,7 @@ func (pm *PriorityMatrix) applyEscalations(
 	// Sensitive data escalation
 	if pm.config.SensitiveDataEscalation {
 		if finding.Context.DataClassification == "PCI" || finding.Context.DataClassification == "PII" {
-			if result.Priority > P2 {
+			if result.Priority.LowerThan(P2) {
 				result.Priority = escalatePriority(result.Priority)
 				reasons = append(reasons, fmt.Sprintf("%s data classification", finding.Context.DataClassification))
 			}
@@ -285,7 +294,7 @@ func (pm *PriorityMatrix) applyEscalations(
 	}
 
 	// Internet-facing escalation
-	if finding.Context.InternetFacing && result.Priority > P2 {
+	if finding.Context.InternetFacing && result.Priority.LowerThan(P2) {
 		result.Priority = escalatePriority(result.Priority)
 		reasons = append(reasons, "Internet-facing resource")
 	}
@@ -294,7 +303,7 @@ func (pm *PriorityMatrix) applyEscalations(
 	if pm.config.SLAEscalation && finding.DaysOpen > 0 {
 		slaDeadline := pm.getSLADays(risk.AdjustedSeverity)
 		if finding.DaysOpen > slaDeadline {
-			if result.Priority > P1 {
+			if result.Priority.LowerThan(P1) {
 				result.Priority = escalatePriority(result.Priority)
 				reasons = append(reasons, fmt.Sprintf("SLA overdue by %d days", finding.DaysOpen-slaDeadline))
 			}
@@ -422,7 +431,7 @@ func (pm *PriorityMatrix) setActionRecommendations(result *PrioritizedFinding) {
 // calculateSLA sets SLA tracking fields.
 func (pm *PriorityMatrix) calculateSLA(result *PrioritizedFinding, finding *Finding) {
 	slaDays := pm.getSLADays(result.RiskAssessment.AdjustedSeverity)
-	
+
 	// SLA starts from first detection
 	if !finding.FirstSeen.IsZero() {
 		result.SLADeadline = finding.FirstSeen.AddDate(0, 0, slaDays)
@@ -454,7 +463,7 @@ func (pm *PriorityMatrix) routeToQueue(result *PrioritizedFinding) {
 		result.AssignedQueue = "change_board"
 	case result.ComplexityAssessment.RequiresAppTeam:
 		result.AssignedQueue = "app_team"
-	case result.Priority <= P2:
+	case !result.Priority.LowerThan(P2):
 		result.AssignedQueue = "security_review"
 	default:
 		result.AssignedQueue = "remediation_queue"
@@ -513,12 +522,12 @@ func escalatePriority(p Priority) Priority {
 
 // QueueSummary provides aggregate statistics by queue.
 type QueueSummary struct {
-	Queue              string `json:"queue"`
-	TotalFindings      int    `json:"total_findings"`
-	AutoRemediationReady int  `json:"auto_remediation_ready"`
-	ByPriority         map[Priority]int `json:"by_priority"`
-	BySeverity         map[string]int   `json:"by_severity"`
-	OverdueSLA         int    `json:"overdue_sla"`
+	Queue                string           `json:"queue"`
+	TotalFindings        int              `json:"total_findings"`
+	AutoRemediationReady int              `json:"auto_remediation_ready"`
+	ByPriority           map[Priority]int `json:"by_priority"`
+	BySeverity           map[string]int   `json:"by_severity"`
+	OverdueSLA           int              `json:"overdue_sla"`
 }
 
 // GenerateQueueSummaries creates summary statistics for each queue.
@@ -539,7 +548,7 @@ func GenerateQueueSummaries(findings []*PrioritizedFinding) map[string]*QueueSum
 		s.TotalFindings++
 		s.ByPriority[f.Priority]++
 		s.BySeverity[f.RiskAssessment.AdjustedSeverity]++
-		
+
 		if f.AutoRemediationReady {
 			s.AutoRemediationReady++
 		}
@@ -553,27 +562,27 @@ func GenerateQueueSummaries(findings []*PrioritizedFinding) map[string]*QueueSum
 
 // ActionableSummary provides a high-level summary for dashboards.
 type ActionableSummary struct {
-	GeneratedAt           time.Time `json:"generated_at"`
-	TotalFindings         int       `json:"total_findings"`
-	
+	GeneratedAt   time.Time `json:"generated_at"`
+	TotalFindings int       `json:"total_findings"`
+
 	// By priority
-	P1Count              int `json:"p1_count"`
-	P2Count              int `json:"p2_count"`
-	P3Count              int `json:"p3_count"`
-	P4Count              int `json:"p4_count"`
-	P5Count              int `json:"p5_count"`
-	
+	P1Count int `json:"p1_count"`
+	P2Count int `json:"p2_count"`
+	P3Count int `json:"p3_count"`
+	P4Count int `json:"p4_count"`
+	P5Count int `json:"p5_count"`
+
 	// Automation
-	AutoRemediationReady int `json:"auto_remediation_ready"`
+	AutoRemediationReady int     `json:"auto_remediation_ready"`
 	AutoRemediationPct   float64 `json:"auto_remediation_pct"`
-	
+
 	// SLA
-	OnTrackSLA           int `json:"on_track_sla"`
-	AtRiskSLA            int `json:"at_risk_sla"`
-	OverdueSLA           int `json:"overdue_sla"`
-	
+	OnTrackSLA int `json:"on_track_sla"`
+	AtRiskSLA  int `json:"at_risk_sla"`
+	OverdueSLA int `json:"overdue_sla"`
+
 	// Risk reduction opportunity
-	QuickWins            int `json:"quick_wins"` // P1-P2 + Tier1
+	QuickWins             int     `json:"quick_wins"`               // P1-P2 + Tier1
 	QuickWinRiskReduction float64 `json:"quick_win_risk_reduction"` // % of total risk
 }
 
@@ -635,4 +644,3 @@ func GenerateActionableSummary(findings []*PrioritizedFinding) *ActionableSummar
 
 	return summary
 }
-

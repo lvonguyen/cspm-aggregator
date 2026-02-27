@@ -69,12 +69,19 @@ func (p *SecurityHubProvider) GetFindings(ctx context.Context) ([]Finding, error
 		}
 
 		for _, f := range page.Findings {
+			var severity, status string
+			if f.Severity != nil {
+				severity = string(f.Severity.Label)
+			}
+			if f.Workflow != nil {
+				status = string(f.Workflow.Status)
+			}
 			finding := Finding{
 				ID:          aws.ToString(f.Id),
 				Title:       aws.ToString(f.Title),
 				Description: aws.ToString(f.Description),
-				Severity:    string(f.Severity.Label),
-				Status:      string(f.Workflow.Status),
+				Severity:    severity,
+				Status:      status,
 				AccountID:   aws.ToString(f.AwsAccountId),
 				Region:      aws.ToString(f.Region),
 			}

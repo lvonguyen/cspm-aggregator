@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	epssBaseURL     = "https://api.first.org/data/v1/epss"
-	epssCacheTTL    = 12 * time.Hour
-	epssBatchSize   = 100 // FIRST API max per request
+	epssBaseURL   = "https://api.first.org/data/v1/epss"
+	epssCacheTTL  = 12 * time.Hour
+	epssBatchSize = 100 // FIRST API max per request
 )
 
 // epssEntry is a cached EPSS score with expiry.
@@ -56,13 +56,13 @@ func NewEPSSClientWithHTTP(client *http.Client) *EPSSClient {
 
 // epssResponse is the JSON structure returned by the FIRST API.
 type epssResponse struct {
-	Status     string      `json:"status"`
-	StatusCode int         `json:"status-code"`
-	Version    string      `json:"version"`
-	Access     string      `json:"access"`
-	Total      int         `json:"total"`
-	Offset     int         `json:"offset"`
-	Limit      int         `json:"limit"`
+	Status     string       `json:"status"`
+	StatusCode int          `json:"status-code"`
+	Version    string       `json:"version"`
+	Access     string       `json:"access"`
+	Total      int          `json:"total"`
+	Offset     int          `json:"offset"`
+	Limit      int          `json:"limit"`
 	Data       []epssEntry_ `json:"data"`
 }
 
@@ -169,7 +169,7 @@ func (c *EPSSClient) fetchAndCache(cveIDs []string) error {
 		return fmt.Errorf("EPSS API returned status %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 50<<20)) // 50 MB cap
 	if err != nil {
 		return fmt.Errorf("reading EPSS response body: %w", err)
 	}
