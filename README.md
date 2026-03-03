@@ -1,5 +1,18 @@
 # CSPM Aggregator
 
+> **[!] ARCHIVED — Merged into CloudForge monorepo.**
+>
+> This repository has been merged into [cloudforge](https://github.com/lvonguyen/cloudforge)
+> as `internal/cspm/`. All future development happens there.
+>
+> - **Source code:** `cloudforge/internal/cspm/`
+> - **Cmd binaries:** `cloudforge/cmd/cspm-aggregator/`, `cloudforge/cmd/cspm-testgen/`
+> - **K8s manifests:** `cloudforge/deploy/k8s/cspm-aggregator/`
+> - **Docs:** `cloudforge/docs/cspm/`
+> - **Merged:** 2026-03-02
+
+---
+
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
 [![Multi-Cloud](https://img.shields.io/badge/Multi--Cloud-AWS%20%7C%20Azure%20%7C%20GCP-blue)](docs/HLD.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
